@@ -41,6 +41,8 @@ This is a virtual memory project description in Princeton’s Operating Systems 
 
 This is a virtual memory project description in Stanford’s Operating Systems class that we might use as a starting point for our implementation.
 
+### Pintos Reference Guide:
+
 Pfaff, Ben.  “Pintos.”  Stanford University, n.d.  Web.  26. Mar. 2017.
 
 [https://web.stanford.edu/class/cs140/projects/pintos/pintos.pdf](https://web.stanford.edu/class/cs140/projects/pintos/pintos.pdf)
