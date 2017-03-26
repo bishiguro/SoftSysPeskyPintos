@@ -13,7 +13,7 @@ Stretch goal: A working implementation of VM that includes more advanced impleme
 
 ## Current Progress
 
-We have read Ch3 of TOS on virtual memory and address translation. We have also looked at implementations of virtual memory on an Arduino and on Pintos (see our Annotated Bibliography section). We have outlined a set of tasks to complete for the project in our [project backlog] (https://trello.com/b/jNHxdxiL/softsyspeskypintos)
+We have read Ch3 of TOS on virtual memory and address translation. We have also looked at implementations of virtual memory on an Arduino and on Pintos (see our Annotated Bibliography section). We have outlined a set of tasks to complete for the project in our [project backlog](https://trello.com/b/jNHxdxiL/softsyspeskypintos).
 
 
 
