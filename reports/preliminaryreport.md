@@ -52,28 +52,17 @@ Inputs with gdb:
 We were able to set breakpoints in thread.c, but we have not figured out why gdb cannot find the bounds of a function.
 
 
-Present a product backlog for the next sprint that represents a concrete plan that will keep the entire team productively engaged and get you to your stated goals (this can be a link to your Trello board). If you had trouble putting together evidence for your cards in the previous sprints, adjust your new cards accordingly.
-
-https://trello.com/b/jNHxdxiL/softsyspeskypintos
-
-Research VM specific implementation strategies: 1 page of notes each
-
-Debug threading in Pintos exercise 1 or understand solution
-
-Deliverable: notes on what is occurring in exercise 1 and what issues we ran into, demo of working code
-
-Understand Pintos User Programs exercise 2
-
-Deliverable: notes on what is happening in exercise 2, and any issues we run into if we attempt to implement it, demo of working code
+| Product Backlog | [Trello Board](https://trello.com/b/jNHxdxiL/softsyspeskypintos) |
+| ------------- | ------------- |
 
 
-Implement:
-* Pintos Virtual memory project
-* Pages
-* Stack growth
-* Page tables / Address mapping
-* User memory during system calls
-* Error handling for page faults
+|Upcoming Task | Deliverable |
+| ------------- | ------------- |
+| Research VM specific implementation strategies: 1 page of notes each  |   |
+| Debug threading in Pintos exercise 1 or understand solution  |   Notes on what is occurring in exercise 1 and what issues we ran into, demo of working code |
+| Understand Pintos User Programs exercise 2
+  | Notes on what is happening in exercise 2, and any issues we run into if we attempt to implement it, demo of working code  |
+| Implementation | <ul><li>Pintos Virtual memory project</li><li>Pages</li></ul><ul><li>Stack growth</li><li>Page tables / Address mapping</li></ul><ul><li>User memory during system calls</li><li>Error handling for page faults</li></ul>   |
 
 The potential roadblocks we may face include having difficulty implementing or understanding the threading or user program projects in the Stanford OS course. Having working versions of these components is necessary before implementing virtual memory. These projects are considered difficult, and we will have to take substantial amount of time outside of class to get working versions of projects 1 and 2.  Another potential roadblock stems from the fact that we are working with an environment that we did not build from scratch, which could make debugging more difficult.
 
