@@ -114,6 +114,8 @@ sema_up (struct semaphore *sema)
 
   old_level = intr_disable ();
   sema->value++;
+
+  // CHANGE: unblock thread based on priority, yield to higher-priority thread
   if (!list_empty (&sema->waiters)) 
     {
       /* Find highest-priority waiting thread. */
@@ -210,12 +212,14 @@ lock_init (struct lock *lock)
 void
 lock_acquire (struct lock *lock)
 {
+  // CHANGE: keep track of interrupt level
   enum intr_level old_level;
 
   ASSERT (lock != NULL);
   ASSERT (!intr_context ());
   ASSERT (!lock_held_by_current_thread (lock));
 
+  // CHANGE: priority donation
   old_level = intr_disable ();
 
   if (lock->holder != NULL) 
@@ -236,6 +240,8 @@ lock_acquire (struct lock *lock)
 
   sema_down (&lock->semaphore);
   lock->holder = thread_current ();
+
+  // CHANGE: disable interrupts
   intr_set_level (old_level);
 }
 
@@ -267,6 +273,7 @@ lock_try_acquire (struct lock *lock)
 void
 lock_release (struct lock *lock) 
 {
+  // CHANGE: keeping track of 
   enum intr_level old_level;
   struct thread *t = thread_current ();
   struct list_elem *e;
@@ -274,6 +281,7 @@ lock_release (struct lock *lock)
   ASSERT (lock != NULL);
   ASSERT (lock_held_by_current_thread (lock));
 
+  // CHANGE: return priority donations
   old_level = intr_disable ();
 
   /* Return donations to threads that want this lock. */

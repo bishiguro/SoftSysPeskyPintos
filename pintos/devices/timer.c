@@ -24,13 +24,14 @@ static int64_t ticks;
    Initialized by timer_calibrate(). */
 static unsigned loops_per_tick;
 
+/* Threads waiting in timer_sleep(). */
+static struct list wait_list; // CHANGE: list of waiting threads
+
 static intr_handler_func timer_interrupt;
 static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
 static void real_time_delay (int64_t num, int32_t denom);
-
-static struct list wait_list; // CHANGE: list of waiting threads
 
 /* Sets up the timer to interrupt TIMER_FREQ times per second,
    and registers the corresponding interrupt. */
@@ -108,18 +109,17 @@ timer_sleep (int64_t ticks)
   struct thread *t = thread_current (); // CHANGE: initialize thread
 
   /* Schedule our wake-up time. */
-  t->wakeup_time = timer_ticks () + ticks; // CHANGE: set thread wake-up time
+  t->wakeup_time = timer_ticks () + ticks; 
 
   /* Atomically insert the current thread into the wait list. */
   ASSERT (intr_get_level () == INTR_ON);
-  intr_disable(); // CHANGE: disable interrupts while adding to wait_list because of timing sensitivity
+  intr_disable (); // CHANGE: disable interrupts while adding to wait_list because of timing sensitivity
   list_insert_ordered (&wait_list, &t->timer_elem, // CHANGE: insert thread into wait_list in the correct place based on wake-up time
                        compare_threads_by_wakeup_time, NULL);
-  intr_enable(); // CHANGE: re-enable interrupts
+  intr_enable (); // CHANGE: re-enable interrupts
 
   /* Wait. */
-  sema_down(&t->timer_sema); // CHANGE: waiting for interrupt to wake up thread
-
+  sema_down (&t->timer_sema);
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -199,17 +199,16 @@ timer_interrupt (struct intr_frame *args UNUSED)
   ticks++;
   thread_tick ();
 
-  // CHANGE: 
   while (!list_empty (&wait_list))
     {
       struct thread *t = list_entry (list_front (&wait_list),
                                      struct thread, timer_elem);
-      if (ticks < t->wakeup_time) // check if thread is ready to wake up
+      if (ticks < t->wakeup_time) 
         break;
-      sema_up (&t->timer_sema); // TODO: why are we calling sema_up?
+      sema_up (&t->timer_sema);
+      thread_yield_to_higher_priority ();
       list_pop_front (&wait_list);
     }
-
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer

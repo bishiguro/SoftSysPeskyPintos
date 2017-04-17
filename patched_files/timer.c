@@ -25,7 +25,7 @@ static int64_t ticks;
 static unsigned loops_per_tick;
 
 /* Threads waiting in timer_sleep(). */
-static struct list wait_list;
+static struct list wait_list; // CHANGE: list of waiting threads
 
 static intr_handler_func timer_interrupt;
 static bool too_many_loops (unsigned loops);
@@ -41,7 +41,7 @@ timer_init (void)
   pit_configure_channel (0, 2, TIMER_FREQ);
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
 
-  list_init (&wait_list);
+  list_init (&wait_list); // CHANGE: initialize list of waiting threads
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -89,7 +89,7 @@ timer_elapsed (int64_t then)
   return timer_ticks () - then;
 }
 
-/* Compares two threads based on their wake-up times. */
+/* CHANGE: Compares two threads based on their wake-up times. */
 static bool
 compare_threads_by_wakeup_time (const struct list_elem *a_,
                                 const struct list_elem *b_,
@@ -106,17 +106,17 @@ compare_threads_by_wakeup_time (const struct list_elem *a_,
 void
 timer_sleep (int64_t ticks) 
 {
-  struct thread *t = thread_current ();
+  struct thread *t = thread_current (); // CHANGE: initialize thread
 
   /* Schedule our wake-up time. */
-  t->wakeup_time = timer_ticks () + ticks;
+  t->wakeup_time = timer_ticks () + ticks; 
 
   /* Atomically insert the current thread into the wait list. */
   ASSERT (intr_get_level () == INTR_ON);
-  intr_disable ();
-  list_insert_ordered (&wait_list, &t->timer_elem,
+  intr_disable (); // CHANGE: disable interrupts while adding to wait_list because of timing sensitivity
+  list_insert_ordered (&wait_list, &t->timer_elem, // CHANGE: insert thread into wait_list in the correct place based on wake-up time
                        compare_threads_by_wakeup_time, NULL);
-  intr_enable ();
+  intr_enable (); // CHANGE: re-enable interrupts
 
   /* Wait. */
   sema_down (&t->timer_sema);
