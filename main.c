@@ -23,6 +23,32 @@ void page_fault_handler( struct page_table *pt, int page )
 	exit(1);
 }
 
+void page_fault_handler_random(struct page_table *pt, int page){
+
+	// Make default values for frame and bits to fill in from the page table.
+	int frame;
+	int bits;
+	// Fill in frame and bit values for the page from the page table
+	page_table_get_entry(pt, page, &frame, &bits);
+
+	// Find the frame to load
+
+	// Find if there are empty frames
+	// If there are empty frames, fill an empty frame with the new page
+	// Mark the frame as used
+
+	// If there are no empty frames, pick a random frame to replace
+	// (save it to disk if it has been changed, then remove it)
+	// and put that page in it
+
+	// Update page table
+
+
+
+
+
+}
+
 int main( int argc, char *argv[] )
 {
 	if(argc!=5) {
