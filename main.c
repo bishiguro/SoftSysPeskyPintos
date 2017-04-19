@@ -10,10 +10,11 @@ how to use the page table and disk interfaces.
 #include "disk.h"
 #include "program.h"
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+#include <time.h>
 
 void page_fault_handler( struct page_table *pt, int page )
 {
@@ -24,6 +25,7 @@ void page_fault_handler( struct page_table *pt, int page )
 }
 
 void page_fault_handler_random(struct page_table *pt, int page){
+	srand(time(NULL));
 
 	// Make default values for frame and bits to fill in from the page table.
 	int frame;
@@ -38,7 +40,9 @@ void page_fault_handler_random(struct page_table *pt, int page){
 	// Mark the frame as used
 
 	// If there are no empty frames, pick a random frame to replace
-	// (save it to disk if it has been changed, then remove it)
+	int to_replace = rand()%page_table_get_npages(pt);
+
+	// (save what you are replacing to disk if it has been changed, then remove it)
 	// and put that page in it
 
 	// Update page table
