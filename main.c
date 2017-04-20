@@ -16,9 +16,12 @@ how to use the page table and disk interfaces.
 #include <string.h>
 #include <time.h>
 
+struct disk *disk;
+
 void page_fault_handler( struct page_table *pt, int page )
 {
 	page_table_set_entry(pt,page,page,PROT_READ|PROT_WRITE);
+	// page_table_print(pt);
 
 	printf("page fault on page #%d\n",page);
 	exit(1);
@@ -33,21 +36,51 @@ void page_fault_handler_random(struct page_table *pt, int page){
 	// Fill in frame and bit values for the page from the page table
 	page_table_get_entry(pt, page, &frame, &bits);
 
-	// Find the frame to load
+	printf("Frame: %i\n", frame);
+	// TODO: why are all the frames 0?
 
-	// Find if there are empty frames
+	int nframes = page_table_get_nframes(pt);
+
+	printf("nframes: %i\n", nframes);
+
+	char *physmem = page_table_get_physmem(pt);
+
+	// Find if there are empty pages
+	int empty_page = 0;
+	for (int i = 0; i < nframes; i++) { // i = frame index?
+		
+		// TODO: how to loop through frames? frame table?		
+		page_table_get_entry(pt, page, &frame, &bits);
+		if (bits == 0) {
+			page_table_set_entry(pt, page, frame, PROT_READ | PROT_WRITE | PROT_EXEC); // TODO: check for permissions
+			
+			// mapping: frame * PAGE_SIZE
+			disk_read(disk, i, &physmem[frame * PAGE_SIZE]); // frame size = PAGE_SIZE
+
+			empty_page = 1;
+			break;
+		}
+	}
+
+	if (!empty_page) {
+		// If there are no empty frames, pick a random frame to replace
+		int to_replace = rand()%page_table_get_npages(pt);
+		disk_write(disk, to_replace, &physmem[to_replace * PAGE_SIZE]);
+
+	}
+
+	// page_table_print(pt);
+
 	// If there are empty frames, fill an empty frame with the new page
 	// Mark the frame as used
 
-	// If there are no empty frames, pick a random frame to replace
-	int to_replace = rand()%page_table_get_npages(pt);
 
 	// (save what you are replacing to disk if it has been changed, then remove it)
 	// and put that page in it
 
 	// Update page table
 
-
+	exit(1);
 
 
 
@@ -64,14 +97,14 @@ int main( int argc, char *argv[] )
 	int nframes = atoi(argv[2]);
 	const char *program = argv[4];
 
-	struct disk *disk = disk_open("myvirtualdisk",npages);
+	disk = disk_open("myvirtualdisk",npages);
 	if(!disk) {
 		fprintf(stderr,"couldn't create virtual disk: %s\n",strerror(errno));
 		return 1;
 	}
 
 
-	struct page_table *pt = page_table_create( npages, nframes, page_fault_handler );
+	struct page_table *pt = page_table_create( npages, nframes, page_fault_handler_random );
 	if(!pt) {
 		fprintf(stderr,"couldn't create page table: %s\n",strerror(errno));
 		return 1;
