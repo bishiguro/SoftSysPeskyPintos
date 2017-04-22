@@ -1,4 +1,6 @@
 /*
+Authors: Bonnie Ishiguro, Andrew Pan, Apurva Raman, Jiaxuan (Amy) Wu
+
 Main program for the virtual memory project.
 Make all of your modifications to this file.
 You may add or rearrange any code or data as you need.
@@ -18,15 +20,24 @@ how to use the page table and disk interfaces.
 
 struct disk *disk;
 
+/*default page fault handler that assumes there are more frames than pages
+* This assumption means we don't need disk and can make page N map to frame N
+*/
 void page_fault_handler( struct page_table *pt, int page )
 {
 	page_table_set_entry(pt,page,page,PROT_READ|PROT_WRITE);
-	// page_table_print(pt);
+//	page_table_print(pt);
 
 	printf("page fault on page #%d\n",page);
-	exit(1);
+//	exit(1);
 }
 
+/*random page fault handler
+* 1) chooses a free frame
+* 2) adjusts page table to map page to free frame, with read permissions
+* 3) loads page from disk into free frame
+* Downside: Prone to throwing out a page that's being used
+*/
 void page_fault_handler_random(struct page_table *pt, int page){
 	srand(time(NULL));
 
@@ -86,6 +97,17 @@ void page_fault_handler_random(struct page_table *pt, int page){
 
 }
 
+/*
+TODO: 
+1) finish rand (random replacement)
+2) implement fifo (first-in-first-out)
+3) implement custom algorithim
+
+TODO:
+1) describe custom page replacement algorithm
+2) explain why one algorithm works better than another
+3) include which command line arguments we ran to reproduce work
+*/
 int main( int argc, char *argv[] )
 {
 	if(argc!=5) {
@@ -130,6 +152,7 @@ int main( int argc, char *argv[] )
 
 	page_table_delete(pt);
 	disk_close(disk);
-
+	
+	//TODO: print total number of oage faults, disk reads, disk writes
 	return 0;
 }
