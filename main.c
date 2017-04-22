@@ -1,6 +1,5 @@
 /*
 Authors: Bonnie Ishiguro, Andrew Pan, Apurva Raman, Jiaxuan (Amy) Wu
-
 Main program for the virtual memory project.
 Make all of your modifications to this file.
 You may add or rearrange any code or data as you need.
@@ -20,13 +19,21 @@ how to use the page table and disk interfaces.
 
 struct disk *disk;
 
+/*frame table*/
+struct frame_table{
+	int *frames;
+};
+
+struct frame_table *ft;
+
+
 /*default page fault handler that assumes there are more frames than pages
 * This assumption means we don't need disk and can make page N map to frame N
 */
 void page_fault_handler( struct page_table *pt, int page )
 {
 	page_table_set_entry(pt,page,page,PROT_READ|PROT_WRITE);
-//	page_table_print(pt);
+	page_table_print(pt);
 
 	printf("page fault on page #%d\n",page);
 //	exit(1);
@@ -40,47 +47,58 @@ void page_fault_handler( struct page_table *pt, int page )
 */
 void page_fault_handler_random(struct page_table *pt, int page){
 	srand(time(NULL));
-
+	if(!ft){
+		ft = malloc(sizeof(struct frame_table));
+		ft->frames = malloc(sizeof(int) * page_table_get_nframes(pt));
+	}
 	// Make default values for frame and bits to fill in from the page table.
 	int frame;
 	int bits;
-	// Fill in frame and bit values for the page from the page table
-	page_table_get_entry(pt, page, &frame, &bits);
+	int new_frame;
+	int new_bits;
 
-	printf("Frame: %i\n", frame);
-	// TODO: why are all the frames 0?
+	page_table_get_entry(pt, page, &new_frame,&new_bits);
 
 	int nframes = page_table_get_nframes(pt);
-
-	printf("nframes: %i\n", nframes);
+	int nPages = page_table_get_npages(pt);
 
 	char *physmem = page_table_get_physmem(pt);
 
 	// Find if there are empty pages
 	int empty_page = 0;
-	for (int i = 0; i < nframes; i++) { // i = frame index?
-		
+	for (int i = 0; i < nframes; i++) { 
+		if(ft->frames[i]==NULL){
+			page_table_set_entry(pt,page,i,PROT_READ);
+			ft->frames[i] = PROT_READ;
+		}
 		// TODO: how to loop through frames? frame table?		
-		page_table_get_entry(pt, page, &frame, &bits);
+/*		page_table_get_entry(pt, page, &frame, &bits);
 		if (bits == 0) {
-			page_table_set_entry(pt, page, frame, PROT_READ | PROT_WRITE | PROT_EXEC); // TODO: check for permissions
+			page_table_set_entry(pt, page, frame, PROT_READ); // TODO: check for permissions
 			
 			// mapping: frame * PAGE_SIZE
 			disk_read(disk, i, &physmem[frame * PAGE_SIZE]); // frame size = PAGE_SIZE
-
+			page_table_print(pt);
 			empty_page = 1;
 			break;
 		}
+		*/
 	}
+
 
 	if (!empty_page) {
 		// If there are no empty frames, pick a random frame to replace
-		int to_replace = rand()%page_table_get_npages(pt);
-		disk_write(disk, to_replace, &physmem[to_replace * PAGE_SIZE]);
-
+		int to_replace = lrand48()%nPages;
+		page_table_get_entry(pt, to_replace,&frame,&bits);
+		disk_write(disk, to_replace, &physmem[frame * PAGE_SIZE]);
+		disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
+		page_table_set_entry(pt, page, frame, PROT_READ);
+		page_table_set_entry(pt, to_replace, new_frame, 0);
+		printf("random #: %d\n",to_replace);
 	}
 
-	// page_table_print(pt);
+	printf("number of pages %d\n",nPages);
+	page_table_print(pt);
 
 	// If there are empty frames, fill an empty frame with the new page
 	// Mark the frame as used
@@ -91,7 +109,7 @@ void page_fault_handler_random(struct page_table *pt, int page){
 
 	// Update page table
 
-	exit(1);
+//	exit(1);
 
 
 
@@ -102,7 +120,6 @@ TODO:
 1) finish rand (random replacement)
 2) implement fifo (first-in-first-out)
 3) implement custom algorithim
-
 TODO:
 1) describe custom page replacement algorithm
 2) explain why one algorithm works better than another
@@ -126,7 +143,7 @@ int main( int argc, char *argv[] )
 	}
 
 
-	struct page_table *pt = page_table_create( npages, nframes, page_fault_handler_random );
+	struct page_table *pt = page_table_create( npages, nframes, page_fault_handler_random);
 	if(!pt) {
 		fprintf(stderr,"couldn't create page table: %s\n",strerror(errno));
 		return 1;
@@ -135,6 +152,12 @@ int main( int argc, char *argv[] )
 	char *virtmem = page_table_get_virtmem(pt);
 
 	char *physmem = page_table_get_physmem(pt);
+	
+/*	int i;
+	for(i=0; i<npages-1; i++){
+		page_table_set_entry(pt, i, i, PROT_READ|PROT_WRITE);
+	}
+*/
 
 	if(!strcmp(program,"sort")) {
 		sort_program(virtmem,npages*PAGE_SIZE);
