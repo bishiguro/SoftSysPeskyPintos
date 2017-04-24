@@ -46,6 +46,9 @@ void page_fault_handler( struct page_table *pt, int page )
 * Downside: Prone to throwing out a page that's being used
 */
 void page_fault_handler_random(struct page_table *pt, int page){
+	
+	printf("Faulted page: %i\n", page);
+
 	srand(time(NULL));
 	if(!ft){
 		ft = malloc(sizeof(struct frame_table));
@@ -57,6 +60,7 @@ void page_fault_handler_random(struct page_table *pt, int page){
 	int new_frame;
 	int new_bits;
 
+	// TODO: do we need this?
 	page_table_get_entry(pt, page, &new_frame,&new_bits);
 
 	int nframes = page_table_get_nframes(pt);
@@ -64,29 +68,39 @@ void page_fault_handler_random(struct page_table *pt, int page){
 
 	char *physmem = page_table_get_physmem(pt);
 
-	// Find if there are empty pages
-	int empty_page = 0;
-	for (int i = 0; i < nframes; i++) { 
-		if(ft->frames[i]==NULL){
+	/*
+	FIXME: Two page faults on the same page in a row
+	Is the page mapping not being set?
+	
+	Faulted page: 0
+	(page fault handler) frame: 0
+	(set entry) frame: 0
+	Faulted page: 0
+	(page fault handler) frame: 1
+	(set entry) frame: 1
+	Faulted page: 0
+	(page fault handler) frame: 2
+	(set entry) frame: 2
+	*/
+
+
+	// Find if there is an empty frame
+	int empty_frame = 0;
+	for (int i = 0; i < nframes; i++) {
+		if(ft->frames[i]==0){
+			printf("(page fault handler) frame: %i\n", i);
+			// printf("frame bits: %i", ft->frames[i]);
 			page_table_set_entry(pt,page,i,PROT_READ);
+			disk_read(disk, page, &physmem[i * PAGE_SIZE]);
+
 			ft->frames[i] = PROT_READ;
-		}
-		// TODO: how to loop through frames? frame table?		
-/*		page_table_get_entry(pt, page, &frame, &bits);
-		if (bits == 0) {
-			page_table_set_entry(pt, page, frame, PROT_READ); // TODO: check for permissions
-			
-			// mapping: frame * PAGE_SIZE
-			disk_read(disk, i, &physmem[frame * PAGE_SIZE]); // frame size = PAGE_SIZE
-			page_table_print(pt);
-			empty_page = 1;
+			empty_frame = 1;
 			break;
 		}
-		*/
 	}
 
-
-	if (!empty_page) {
+	/*
+	if (!empty_frame) {
 		// If there are no empty frames, pick a random frame to replace
 		int to_replace = lrand48()%nPages;
 		page_table_get_entry(pt, to_replace,&frame,&bits);
@@ -96,20 +110,20 @@ void page_fault_handler_random(struct page_table *pt, int page){
 		page_table_set_entry(pt, to_replace, new_frame, 0);
 		printf("random #: %d\n",to_replace);
 	}
+	*/
 
-	printf("number of pages %d\n",nPages);
-	page_table_print(pt);
+	// page_table_print(pt);
 
 	// If there are empty frames, fill an empty frame with the new page
 	// Mark the frame as used
-
 
 	// (save what you are replacing to disk if it has been changed, then remove it)
 	// and put that page in it
 
 	// Update page table
 
-//	exit(1);
+	// TODO: why exit? when/do we use it?
+	// exit(1);
 
 
 
