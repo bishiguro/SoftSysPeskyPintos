@@ -68,21 +68,6 @@ void page_fault_handler_random(struct page_table *pt, int page){
 
 	char *physmem = page_table_get_physmem(pt);
 
-	/*
-	FIXME: Two page faults on the same page in a row
-	Is the page mapping not being set?
-	
-	Faulted page: 0
-	(page fault handler) frame: 0
-	(set entry) frame: 0
-	Faulted page: 0
-	(page fault handler) frame: 1
-	(set entry) frame: 1
-	Faulted page: 0
-	(page fault handler) frame: 2
-	(set entry) frame: 2
-	*/
-
 
 	// Find if there is an empty frame
 	int empty_frame = 0;
@@ -90,16 +75,16 @@ void page_fault_handler_random(struct page_table *pt, int page){
 		if(ft->frames[i]==0){
 			printf("(page fault handler) frame: %i\n", i);
 			// printf("frame bits: %i", ft->frames[i]);
-			page_table_set_entry(pt,page,i,PROT_READ);
+			page_table_set_entry(pt,page,i,PROT_READ|PROT_WRITE);
 			disk_read(disk, page, &physmem[i * PAGE_SIZE]);
 
-			ft->frames[i] = PROT_READ;
+			ft->frames[i] = PROT_READ|PROT_WRITE; // TODO: when do we set write permissions?
 			empty_frame = 1;
 			break;
 		}
 	}
 
-	/*
+	 // TODO: revisit get_entry
 	if (!empty_frame) {
 		// If there are no empty frames, pick a random frame to replace
 		int to_replace = lrand48()%nPages;
@@ -110,9 +95,9 @@ void page_fault_handler_random(struct page_table *pt, int page){
 		page_table_set_entry(pt, to_replace, new_frame, 0);
 		printf("random #: %d\n",to_replace);
 	}
-	*/
+	
 
-	// page_table_print(pt);
+	page_table_print(pt);
 
 	// If there are empty frames, fill an empty frame with the new page
 	// Mark the frame as used
@@ -133,7 +118,7 @@ void page_fault_handler_random(struct page_table *pt, int page){
 TODO: 
 1) finish rand (random replacement)
 2) implement fifo (first-in-first-out)
-3) implement custom algorithim
+3) implement custom algorithm
 TODO:
 1) describe custom page replacement algorithm
 2) explain why one algorithm works better than another
@@ -166,12 +151,6 @@ int main( int argc, char *argv[] )
 	char *virtmem = page_table_get_virtmem(pt);
 
 	char *physmem = page_table_get_physmem(pt);
-	
-/*	int i;
-	for(i=0; i<npages-1; i++){
-		page_table_set_entry(pt, i, i, PROT_READ|PROT_WRITE);
-	}
-*/
 
 	if(!strcmp(program,"sort")) {
 		sort_program(virtmem,npages*PAGE_SIZE);
@@ -190,6 +169,6 @@ int main( int argc, char *argv[] )
 	page_table_delete(pt);
 	disk_close(disk);
 	
-	//TODO: print total number of oage faults, disk reads, disk writes
+	//TODO: print total number of page faults, disk reads, disk writes
 	return 0;
 }
