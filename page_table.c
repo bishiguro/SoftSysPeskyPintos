@@ -82,6 +82,12 @@ struct page_table * page_table_create( int npages, int nframes, page_fault_handl
 	pt->page_bits = malloc(sizeof(int)*npages);
 	pt->page_mapping = malloc(sizeof(int)*npages);
 
+	// TODO: change the way that invalid frames are marked
+	// int j;
+	// for(j = 0; j < npages; j++){
+	// 	pt->page_mapping[j] = 0;
+	// }
+
 	pt->handler = handler;
 
 	for(i=0;i<pt->npages;i++) pt->page_bits[i] = 0;
@@ -154,7 +160,7 @@ void page_table_print_entry( struct page_table *pt, int page )
 
 }
 
-void page_table_print( struct page_table *pt )
+void page_table_print( struct page_table *pt)
 {
 	int i;
 	for(i=0;i<pt->npages;i++) {
