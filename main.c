@@ -30,46 +30,6 @@ struct frame_table *ft;
 
 circBuf_t *cb;
 
-// struct page_table {
-// 	int fd;
-// 	char *virtmem;
-// 	int npages;
-// 	char *physmem;
-// 	int nframes;
-// 	int *page_mapping;
-// 	int *page_bits;
-// 	page_fault_handler_t handler;
-// };
-
-
-// void page_table_print_entry_better( struct page_table *pt, int page, struct frame_table *ft)
-// {
-// 	if( page<0 || page>=pt->npages ) {
-// 		fprintf(stderr,"page_table_print_entry: illegal page #%d\n",page);
-// 		abort();
-// 	}
-
-// 	int b = pt->page_bits[page];
-
-
-
-// 	printf("page %06d: frame %06d bits %c%c%c\n",
-// 		page,
-// 		pt->page_mapping[page],
-// 		b&PROT_READ  ? 'r' : '-',
-// 		b&PROT_WRITE ? 'w' : '-',
-// 		b&PROT_EXEC  ? 'x' : '-'
-// 	);
-
-// }
-
-// void page_table_print_better( struct page_table *pt, struct frame_table *ft)
-// {
-// 	int i;
-// 	for(i=0;i<pt->npages;i++) {
-// 		page_table_print_entry_better(pt,i, ft);
-// 	}
-// }
 
 /*random page fault handler
 * 1) chooses a free frame
@@ -101,7 +61,7 @@ void page_fault_handler_random(struct page_table *pt, int page){
 
 	// Find if there is an empty frame
 	int empty_frame = 0;
-	
+
 	int i;
 	for (i = 0; i < nframes; i++) {
 		if(ft->frames[i]==0){
@@ -146,7 +106,7 @@ void page_fault_handler_random(struct page_table *pt, int page){
 void page_fault_handler_fifo(struct page_table *pt, int page){
 	printf("Faulted page: %i\n", page);
 
-	
+
 	// Make default values for frame and bits to fill in from the page table.
 	int frame;
 	int bits;
@@ -172,7 +132,7 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 
 	// Find if there is an empty frame
 	int empty_frame = 0;
-	
+
 	int i;
 	for (i = 0; i < nframes; i++) {
 		if(ft->frames[i]==0){
@@ -231,7 +191,7 @@ void page_fault_handler( struct page_table *pt, int page )
 
 	// Find if there is an empty frame
 	int empty_frame = 0;
-	
+
 	int i;
 	for (i = 0; i < nframes; i++) {
 		if(ft->frames[i]==0){
@@ -253,7 +213,7 @@ void page_fault_handler( struct page_table *pt, int page )
 }
 
 /*
-TODO: 
+TODO:
 1) finish rand (random replacement)
 2) implement fifo (first-in-first-out)
 3) implement custom algorithm
@@ -306,7 +266,7 @@ int main( int argc, char *argv[] )
 
 	page_table_delete(pt);
 	disk_close(disk);
-	
+
 	//TODO: print total number of page faults, disk reads, disk writes
 	return 0;
 }
