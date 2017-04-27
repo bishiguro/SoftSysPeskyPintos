@@ -151,16 +151,18 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 	}
 	// TODO: create a struct of input arguments to pass around including which fault handler to run
 	if(!empty_frame){
-		int *to_replace;
+		int *to_replace = malloc(sizeof(*to_replace));
 		cb_pop(cb, to_replace);
 
 		page_table_get_entry(pt, *to_replace,&frame,&bits);
 		disk_write(disk, *to_replace, &physmem[frame * PAGE_SIZE]);
 		disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
 		page_table_set_entry(pt, page, frame, PROT_READ|PROT_WRITE);
-		cb_push(cb, page);
+		
+		cb_push(cb, page);		
+
 		page_table_set_entry(pt, *to_replace, new_frame, 0);
-		printf("random #: %d\n",*to_replace);
+		printf("page to replace: %d\n",*to_replace);
 	}
 	page_table_print(pt);
 }
@@ -196,7 +198,6 @@ void page_fault_handler( struct page_table *pt, int page )
 	for (i = 0; i < nframes; i++) {
 		if(ft->frames[i]==0){
 			printf("(page fault handler) frame: %i\n", i);
-			// printf("frame bits: %i", ft->frames[i]);
 			page_table_set_entry(pt,page,i,PROT_READ|PROT_WRITE);
 			disk_read(disk, page, &physmem[i * PAGE_SIZE]);
 
@@ -214,8 +215,6 @@ void page_fault_handler( struct page_table *pt, int page )
 
 /*
 TODO:
-1) finish rand (random replacement)
-2) implement fifo (first-in-first-out)
 3) implement custom algorithm
 TODO:
 1) describe custom page replacement algorithm

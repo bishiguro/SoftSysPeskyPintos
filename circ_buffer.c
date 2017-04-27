@@ -12,11 +12,11 @@ typedef struct circBuf_t{
 } circBuf_t;
 
 circBuf_t *make_cb(int size){
-	circBuf_t *cb = malloc(sizeof(struct circBuf_t)*100);
+	circBuf_t *cb = malloc(sizeof(struct circBuf_t));
 	cb->table_size = size;
 	cb->head = 0;
 	cb->tail = 0;
-	cb->buffer = malloc(sizeof(int) * size);
+	cb->buffer = malloc(sizeof(int) * size * 100);
 	return cb;
 }
 
@@ -30,6 +30,7 @@ int is_buffer_full(circBuf_t *cb){
 
 int cb_push(circBuf_t *cb, int data){
 	int next = cb->head + 1;
+
 	if(next >= cb->table_size){
 		next = 0;
 	}
@@ -53,7 +54,9 @@ int cb_pop(circBuf_t *cb, int *data){
 	if(next >= cb->table_size){
 		next = 0;
 	}
+
 	*data = cb->buffer[cb->tail];
 	cb->tail = next;
+
 	return 0;
 }
