@@ -16,7 +16,7 @@ circBuf_t *make_cb(int size){
 	cb->table_size = size;
 	cb->head = 0;
 	cb->tail = 0;
-	cb->buffer = malloc(sizeof(int) * size * 100);
+	cb->buffer = malloc(sizeof(int) * size);
 	return cb;
 }
 
@@ -34,18 +34,15 @@ int cb_push(circBuf_t *cb, int data){
 	if(next >= cb->table_size){
 		next = 0;
 	}
-
 	if(next == cb->tail){	// circular buffer is full
 		return -1;
 	}
-
 	cb->buffer[cb->head] = data;
 	cb->head = next;
 	return 0;
 }
 
 int cb_pop(circBuf_t *cb, int *data){
-	// empty buffer
 	if(is_buffer_empty(cb)){
 		return -1;
 	}
