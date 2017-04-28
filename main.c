@@ -67,10 +67,16 @@ void page_fault_handler_random(struct page_table *pt, int page){
 		if(ft->frames[i]==0){
 			printf("(page fault handler) frame: %i\n", i);
 			// printf("frame bits: %i", ft->frames[i]);
-			page_table_set_entry(pt,page,i,PROT_READ|PROT_WRITE);
+			if (new_bits == PROT_READ) {
+				page_table_set_entry(pt, page, i, PROT_READ|PROT_WRITE);
+				ft->frames[i] = PROT_READ | PROT_WRITE;
+			}
+			else if (new_bits == 0) {
+				page_table_set_entry(pt,page,i,PROT_READ);
+				ft->frames[i] = PROT_READ;
+			}
 			disk_read(disk, page, &physmem[i * PAGE_SIZE]);
 
-			ft->frames[i] = PROT_READ|PROT_WRITE; // TODO: when do we set write permissions?
 			empty_frame = 1;
 			break;
 		}
@@ -88,6 +94,9 @@ void page_fault_handler_random(struct page_table *pt, int page){
 		page_table_set_entry(pt, page, frame, PROT_READ|PROT_WRITE);
 		page_table_set_entry(pt, to_replace, new_frame, 0);
 		printf("random #: %d\n",to_replace);
+
+		ft->frames[frame] = PROT_READ|PROT_WRITE;
+		ft->frames[new_frame] = 0;
 	}
 	page_table_print(pt);
 
@@ -106,14 +115,12 @@ void page_fault_handler_random(struct page_table *pt, int page){
 void page_fault_handler_fifo(struct page_table *pt, int page){
 	printf("Faulted page: %i\n", page);
 
-
 	// Make default values for frame and bits to fill in from the page table.
 	int frame;
 	int bits;
 	int new_frame;
 	int new_bits;
 
-	// TODO: do we need this?
 	page_table_get_entry(pt, page, &new_frame,&new_bits);
 
 	int nframes = page_table_get_nframes(pt);
@@ -130,40 +137,52 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 		cb = make_cb(nPages);
 	}
 
-	// Find if there is an empty frame
-	int empty_frame = 0;
+	if (new_frame == PROT_READ) { // is this correct? outside empty frame check?
+		page_table_set_entry(pt, page, i, PROT_READ|PROT_WRITE);
+		ft->frames[i] = PROT_READ|PROT_WRITE;
+	}
+	else {
+		// Find if there is an empty frame
+		int empty_frame = 0;
 
-	int i;
-	for (i = 0; i < nframes; i++) {
-		if(ft->frames[i]==0){
-			printf("(page fault handler) frame: %i\n", i);
-			// printf("frame bits: %i", ft->frames[i]);
-			page_table_set_entry(pt,page,i,PROT_READ|PROT_WRITE);
-			disk_read(disk, page, &physmem[i * PAGE_SIZE]);
+		printf("nframes: %i\n", nframes);
+		for (int i = 0; i < nframes; i++) {
+			// FIXME: alternating between full and empty frames
+			// 	changing frame #s?
 
-			ft->frames[i] = PROT_READ|PROT_WRITE; // TODO: when do we set write permissions?
-			empty_frame = 1;
+			printf("(page fault handler) frame: %i, bits: %i\n", i, ft->frames[i]);
+			if(ft->frames[i]==0) {
+				printf("PROT_READ not set\n");
+				page_table_set_entry(pt,page,i,PROT_READ);
+				ft->frames[i] = PROT_READ; // what are we doing with this frame?
 
-			cb_push(cb, page);
+				disk_read(disk, page, &physmem[i * PAGE_SIZE]);
+				empty_frame = 1;
+				cb_push(cb, page);
+				break;
+			}
+			
+		}
+		// TODO: create a struct of input arguments to pass around including which fault handler to run
+		
+		if(!empty_frame){
+			int *to_replace = malloc(sizeof(*to_replace));
+			cb_pop(cb, to_replace);
 
-			break;
+			page_table_get_entry(pt, *to_replace,&frame,&bits);
+			disk_write(disk, *to_replace, &physmem[frame * PAGE_SIZE]);
+			disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
+			printf("new frame: %i, old frame: %i\n", frame, new_frame);
+			page_table_set_entry(pt, page, frame, PROT_READ|PROT_WRITE);		
+			cb_push(cb, page);		
+			page_table_set_entry(pt, *to_replace, new_frame, 0);
+			printf("page to replace: %d\n",*to_replace);
+
+			ft->frames[frame] = PROT_READ|PROT_WRITE;
+			ft->frames[new_frame] = 0;
 		}
 	}
-	// TODO: create a struct of input arguments to pass around including which fault handler to run
-	if(!empty_frame){
-		int *to_replace = malloc(sizeof(*to_replace));
-		cb_pop(cb, to_replace);
-
-		page_table_get_entry(pt, *to_replace,&frame,&bits);
-		disk_write(disk, *to_replace, &physmem[frame * PAGE_SIZE]);
-		disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
-		page_table_set_entry(pt, page, frame, PROT_READ|PROT_WRITE);
-		
-		cb_push(cb, page);		
-
-		page_table_set_entry(pt, *to_replace, new_frame, 0);
-		printf("page to replace: %d\n",*to_replace);
-	}
+	
 	page_table_print(pt);
 }
 
@@ -224,6 +243,7 @@ TODO:
 int main( int argc, char *argv[] )
 {
 	if(argc!=5) {
+		// TODO: take replacement algorithm as input
 		printf("use: virtmem <npages> <nframes> <rand|fifo|custom> <sort|scan|focus>\n");
 		return 1;
 	}
