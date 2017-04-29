@@ -40,17 +40,12 @@ circBuf_t *cb;
 void page_fault_handler_random(struct page_table *pt, int page){
 	printf("Faulted page: %i\n", page);
 
-	if(!ft){
-		ft = malloc(sizeof(struct frame_table));
-		ft->frames = malloc(sizeof(int) * page_table_get_nframes(pt));
-	}
 	// Make default values for frame and bits to fill in from the page table.
 	int frame;
 	int bits;
 	int new_frame;
 	int new_bits;
 
-	// TODO: do we need this?
 	page_table_get_entry(pt, page, &new_frame,&new_bits);
 
 	int nframes = page_table_get_nframes(pt);
@@ -59,54 +54,50 @@ void page_fault_handler_random(struct page_table *pt, int page){
 	char *physmem = page_table_get_physmem(pt);
 
 
-	// Find if there is an empty frame
+	if(!ft){
+		ft = malloc(sizeof(struct frame_table));
+		ft->frames = malloc(sizeof(int) * page_table_get_nframes(pt));
+	}
+
 	int empty_frame = 0;
 
-	int i;
-	for (i = 0; i < nframes; i++) {
-		if(ft->frames[i]==0){
-			printf("(page fault handler) frame: %i\n", i);
-			// printf("frame bits: %i", ft->frames[i]);
-			if (new_bits == PROT_READ) {
-				page_table_set_entry(pt, page, i, PROT_READ|PROT_WRITE);
-				ft->frames[i] = PROT_READ | PROT_WRITE;
-			}
-			else if (new_bits == 0) {
+	if (new_bits == PROT_READ) {
+		page_table_set_entry(pt, page, new_frame, PROT_READ|PROT_WRITE);
+		ft->frames[new_frame] = PROT_READ | PROT_WRITE;
+	}
+	else if (new_bits == (PROT_READ | PROT_WRITE)) {
+		printf("Error. RW pages should not fault.\n");
+	}
+	else {
+		// Find if there is an empty frame
+		int i;
+		for (i = 0; i < nframes; i++) {
+			if(ft->frames[i]==0){
+				printf("(page fault handler) frame: %i\n", i);
+				
 				page_table_set_entry(pt,page,i,PROT_READ);
 				ft->frames[i] = PROT_READ;
+				disk_read(disk, page, &physmem[i * PAGE_SIZE]);
+				empty_frame = 1;
+				break;
 			}
-			disk_read(disk, page, &physmem[i * PAGE_SIZE]);
+		}
+		// TODO: create a struct of input arguments to pass around including which fault handler to run
+		if(!empty_frame){
+			srand(time(NULL));
+			int to_replace = lrand48()%nPages;
+			page_table_get_entry(pt, to_replace,&frame,&bits);
+			disk_write(disk, to_replace, &physmem[frame * PAGE_SIZE]);
+			disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
+			page_table_set_entry(pt, page, frame, PROT_READ);
+			page_table_set_entry(pt, to_replace, new_frame, 0);
+			printf("random #: %d\n",to_replace);
 
-			empty_frame = 1;
-			break;
+			ft->frames[frame] = PROT_READ;
+			ft->frames[new_frame] = 0;
 		}
 	}
-	// TODO: create a struct of input arguments to pass around including which fault handler to run
-	if(!empty_frame){
-
-	 // TODO: revisit get_entry
-		// If there are no empty frames, pick a random frame to replace
-		srand(time(NULL));
-		int to_replace = lrand48()%nPages;
-		page_table_get_entry(pt, to_replace,&frame,&bits);
-		disk_write(disk, to_replace, &physmem[frame * PAGE_SIZE]);
-		disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
-		page_table_set_entry(pt, page, frame, PROT_READ|PROT_WRITE);
-		page_table_set_entry(pt, to_replace, new_frame, 0);
-		printf("random #: %d\n",to_replace);
-
-		ft->frames[frame] = PROT_READ|PROT_WRITE;
-		ft->frames[new_frame] = 0;
-	}
 	page_table_print(pt);
-
-	// If there are empty frames, fill an empty frame with the new page
-	// Mark the frame as used
-
-	// (save what you are replacing to disk if it has been changed, then remove it)
-	// and put that page in it
-
-	// Update page table
 
 	// TODO: why exit? when/do we use it?
 	// exit(1);
@@ -128,6 +119,7 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 
 	char *physmem = page_table_get_physmem(pt);
 
+	int empty_frame = 0;
 
 	if(!ft){
 		ft = malloc(sizeof(struct frame_table));
@@ -137,22 +129,21 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 		cb = make_cb(nPages);
 	}
 
-	if (new_frame == PROT_READ) { // is this correct? outside empty frame check?
-		page_table_set_entry(pt, page, i, PROT_READ|PROT_WRITE);
-		ft->frames[i] = PROT_READ|PROT_WRITE;
+	if (new_bits == PROT_READ) {
+		page_table_set_entry(pt, page, new_frame, PROT_READ|PROT_WRITE);
+		ft->frames[new_frame] = PROT_READ | PROT_WRITE;
 	}
+	else if (new_bits == (PROT_READ | PROT_WRITE)) {
+		printf("Error. RW pages should not fault.\n");
+	}
+
 	else {
 		// Find if there is an empty frame
-		int empty_frame = 0;
-
-		printf("nframes: %i\n", nframes);
-		for (int i = 0; i < nframes; i++) {
-			// FIXME: alternating between full and empty frames
-			// 	changing frame #s?
+		int i;
+		for (i = 0; i < nframes; i++) {
 
 			printf("(page fault handler) frame: %i, bits: %i\n", i, ft->frames[i]);
 			if(ft->frames[i]==0) {
-				printf("PROT_READ not set\n");
 				page_table_set_entry(pt,page,i,PROT_READ);
 				ft->frames[i] = PROT_READ; // what are we doing with this frame?
 
@@ -173,12 +164,12 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 			disk_write(disk, *to_replace, &physmem[frame * PAGE_SIZE]);
 			disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
 			printf("new frame: %i, old frame: %i\n", frame, new_frame);
-			page_table_set_entry(pt, page, frame, PROT_READ|PROT_WRITE);		
+			page_table_set_entry(pt, page, frame, PROT_READ);		
 			cb_push(cb, page);		
 			page_table_set_entry(pt, *to_replace, new_frame, 0);
 			printf("page to replace: %d\n",*to_replace);
 
-			ft->frames[frame] = PROT_READ|PROT_WRITE;
+			ft->frames[frame] = PROT_READ;
 			ft->frames[new_frame] = 0;
 		}
 	}
