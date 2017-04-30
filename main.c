@@ -235,7 +235,6 @@ TODO:
 int main( int argc, char *argv[] )
 {
 	if(argc!=5) {
-		// TODO: take replacement algorithm as input
 		printf("use: virtmem <npages> <nframes> <rand|fifo|custom> <sort|scan|focus>\n");
 		return 1;
 	}
