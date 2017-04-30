@@ -43,10 +43,13 @@ void page_fault_handler_random(struct page_table *pt, int page){
 	// Make default values for frame and bits to fill in from the page table.
 	int frame;
 	int bits;
+	int ref_bits;
+
 	int new_frame;
 	int new_bits;
+	int new_ref_bits;
 
-	page_table_get_entry(pt, page, &new_frame,&new_bits);
+	page_table_get_entry(pt, page, &new_frame,&new_bits,&new_ref_bits);
 
 	int nframes = page_table_get_nframes(pt);
 	int nPages = page_table_get_npages(pt);
@@ -62,7 +65,7 @@ void page_fault_handler_random(struct page_table *pt, int page){
 	int empty_frame = 0;
 
 	if (new_bits == PROT_READ) {
-		page_table_set_entry(pt, page, new_frame, PROT_READ|PROT_WRITE);
+		page_table_set_entry(pt, page, new_frame, PROT_READ|PROT_WRITE, 0);
 		ft->frames[new_frame] = PROT_READ | PROT_WRITE;
 	}
 	else if (new_bits == (PROT_READ | PROT_WRITE)) {
@@ -75,7 +78,7 @@ void page_fault_handler_random(struct page_table *pt, int page){
 			if(ft->frames[i]==0){
 				printf("(page fault handler) frame: %i\n", i);
 				
-				page_table_set_entry(pt,page,i,PROT_READ);
+				page_table_set_entry(pt,page,i,PROT_READ, 0);
 				ft->frames[i] = PROT_READ;
 				disk_read(disk, page, &physmem[i * PAGE_SIZE]);
 				empty_frame = 1;
@@ -86,11 +89,11 @@ void page_fault_handler_random(struct page_table *pt, int page){
 		if(!empty_frame){
 			srand(time(NULL));
 			int to_replace = lrand48()%nPages;
-			page_table_get_entry(pt, to_replace,&frame,&bits);
+			page_table_get_entry(pt, to_replace,&frame,&bits,&ref_bits);
 			disk_write(disk, to_replace, &physmem[frame * PAGE_SIZE]);
 			disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
-			page_table_set_entry(pt, page, frame, PROT_READ);
-			page_table_set_entry(pt, to_replace, new_frame, 0);
+			page_table_set_entry(pt, page, frame, PROT_READ, 0);
+			page_table_set_entry(pt, to_replace, new_frame, 0, 0);
 			printf("random #: %d\n",to_replace);
 
 			ft->frames[frame] = PROT_READ;
@@ -111,10 +114,13 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 	// Make default values for frame and bits to fill in from the page table.
 	int frame;
 	int bits;
+	int ref_bits;
+
 	int new_frame;
 	int new_bits;
+	int new_ref_bits;
 
-	page_table_get_entry(pt, page, &new_frame,&new_bits);
+	page_table_get_entry(pt, page, &new_frame,&new_bits,&new_ref_bits);
 
 	int nframes = page_table_get_nframes(pt);
 	int nPages = page_table_get_npages(pt);
@@ -132,7 +138,7 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 	}
 
 	if (new_bits == PROT_READ) {
-		page_table_set_entry(pt, page, new_frame, PROT_READ|PROT_WRITE);
+		page_table_set_entry(pt, page, new_frame, PROT_READ|PROT_WRITE, 0);
 		ft->frames[new_frame] = PROT_READ | PROT_WRITE;
 	}
 	else if (new_bits == (PROT_READ | PROT_WRITE)) {
@@ -145,7 +151,7 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 
 			printf("(page fault handler) frame: %i, bits: %i\n", i, ft->frames[i]);
 			if(ft->frames[i]==0) {
-				page_table_set_entry(pt,page,i,PROT_READ);
+				page_table_set_entry(pt,page,i,PROT_READ, 0);
 				ft->frames[i] = PROT_READ; // what are we doing with this frame?
 
 				disk_read(disk, page, &physmem[i * PAGE_SIZE]);
@@ -161,13 +167,13 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 			int *to_replace = malloc(sizeof(*to_replace));
 			cb_pop(cb, to_replace);
 
-			page_table_get_entry(pt, *to_replace,&frame,&bits);
+			page_table_get_entry(pt, *to_replace,&frame,&bits, &ref_bits);
 			disk_write(disk, *to_replace, &physmem[frame * PAGE_SIZE]);
 			disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
 			printf("new frame: %i, old frame: %i\n", frame, new_frame);
-			page_table_set_entry(pt, page, frame, PROT_READ);		
+			page_table_set_entry(pt, page, frame, PROT_READ, 0);		
 			cb_push(cb, page);		
-			page_table_set_entry(pt, *to_replace, new_frame, 0);
+			page_table_set_entry(pt, *to_replace, new_frame, 0, 0);
 			printf("page to replace: %d\n",*to_replace);
 
 			ft->frames[frame] = PROT_READ;
@@ -178,49 +184,51 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 	page_table_print(pt);
 }
 
-// TODO: make this a handler that performs operations then passes off to whatever case we're running
-void page_fault_handler( struct page_table *pt, int page )
-{
+void page_fault_handler_second_chance (struct page_table *pt, int page){
 	printf("Faulted page: %i\n", page);
 
-	if(!ft){
-		ft = malloc(sizeof(struct frame_table));
-		ft->frames = malloc(sizeof(int) * page_table_get_nframes(pt));
-	}
 	// Make default values for frame and bits to fill in from the page table.
 	int frame;
 	int bits;
+	int ref_bits;
+
 	int new_frame;
 	int new_bits;
+	int new_ref_bits;
 
-	// TODO: do we need this?
-	page_table_get_entry(pt, page, &new_frame,&new_bits);
+	page_table_get_entry(pt, page, &new_frame,&new_bits,&new_ref_bits);
 
 	int nframes = page_table_get_nframes(pt);
 	int nPages = page_table_get_npages(pt);
 
 	char *physmem = page_table_get_physmem(pt);
 
-
-	// Find if there is an empty frame
 	int empty_frame = 0;
 
-	int i;
-	for (i = 0; i < nframes; i++) {
-		if(ft->frames[i]==0){
-			printf("(page fault handler) frame: %i\n", i);
-			page_table_set_entry(pt,page,i,PROT_READ|PROT_WRITE);
-			disk_read(disk, page, &physmem[i * PAGE_SIZE]);
+	if(!ft){
+		ft = malloc(sizeof(struct frame_table));
+		ft->frames = malloc(sizeof(int) * page_table_get_nframes(pt));
+	}
+	if(!cb){
+		cb = make_cb(nPages);
+	}
 
-			ft->frames[i] = PROT_READ|PROT_WRITE; // TODO: when do we set write permissions?
-			empty_frame = 1;
-			break;
-		}
+	if (new_bits == PROT_READ) {
+		page_table_set_entry(pt, page, new_frame, PROT_READ|PROT_WRITE, 1);
+		ft->frames[new_frame] = PROT_READ | PROT_WRITE;
 	}
-	// TODO: create a struct of input arguments to pass around including which fault handler to run
-	if(!empty_frame){
-		page_fault_handler_random(pt, page);
+	else if (new_bits == (PROT_READ | PROT_WRITE)) {
+		printf("Error. RW pages should not fault.\n");
 	}
+	else {
+
+	}
+}
+
+// TODO: make this a handler that performs operations then passes off to whatever case we're running
+void page_fault_handler( struct page_table *pt, int page )
+{
+	printf("Faulted page: %i\n", page);
 	page_table_print(pt);
 }
 
