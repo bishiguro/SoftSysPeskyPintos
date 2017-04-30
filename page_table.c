@@ -23,6 +23,7 @@ struct page_table {
 	int nframes;
 	int *page_mapping;
 	int *page_bits;
+	int *ref_bits;
 	page_fault_handler_t handler;
 };
 
@@ -80,6 +81,7 @@ struct page_table * page_table_create( int npages, int nframes, page_fault_handl
 	pt->npages = npages;
 
 	pt->page_bits = malloc(sizeof(int)*npages);
+	pt->ref_bits = malloc(sizeof(int)*npages);
 	pt->page_mapping = malloc(sizeof(int)*npages);
 
 	// TODO: change the way that invalid frames are marked
@@ -91,6 +93,8 @@ struct page_table * page_table_create( int npages, int nframes, page_fault_handl
 	pt->handler = handler;
 
 	for(i=0;i<pt->npages;i++) pt->page_bits[i] = 0;
+
+	for(i=0;i<pt->npages;i++) pt->ref_bits[i] = 0;
 
 	sa.sa_sigaction = internal_fault_handler;
 	sa.sa_flags = SA_SIGINFO;
@@ -106,12 +110,13 @@ void page_table_delete( struct page_table *pt )
 	munmap(pt->virtmem,pt->npages*PAGE_SIZE);
 	munmap(pt->physmem,pt->nframes*PAGE_SIZE);
 	free(pt->page_bits);
+	free(pt->ref_bits);
 	free(pt->page_mapping);
 	close(pt->fd);
 	free(pt);
 }
 
-void page_table_set_entry( struct page_table *pt, int page, int frame, int bits )
+void page_table_set_entry( struct page_table *pt, int page, int frame, int bits, int ref_bits )
 {
 	if( page<0 || page>=pt->npages ) {
 		fprintf(stderr,"page_table_set_entry: illegal page #%d\n",page);
@@ -125,12 +130,13 @@ void page_table_set_entry( struct page_table *pt, int page, int frame, int bits 
 
 	pt->page_mapping[page] = frame;
 	pt->page_bits[page] = bits;
+	pt->ref_bits[page] = ref_bits;
 
 	remap_file_pages(pt->virtmem+page*PAGE_SIZE,PAGE_SIZE,0,frame,0);
 	mprotect(pt->virtmem+page*PAGE_SIZE,PAGE_SIZE,bits);
 }
 
-void page_table_get_entry( struct page_table *pt, int page, int *frame, int *bits )
+void page_table_get_entry( struct page_table *pt, int page, int *frame, int *bits, int *ref_bits )
 {
 	if( page<0 || page>=pt->npages ) {
 		fprintf(stderr,"page_table_get_entry: illegal page #%d\n",page);
@@ -139,6 +145,7 @@ void page_table_get_entry( struct page_table *pt, int page, int *frame, int *bit
 
 	*frame = pt->page_mapping[page];
 	*bits = pt->page_bits[page];
+	*ref_bits = pt->ref_bits[page];
 }
 
 void page_table_print_entry( struct page_table *pt, int page )

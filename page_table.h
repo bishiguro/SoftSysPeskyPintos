@@ -26,7 +26,7 @@ Set the frame number and access bits associated with a page.
 The bits may be any of PROT_READ, PROT_WRITE, or PROT_EXEC logical-ored together.
 */
 
-void page_table_set_entry( struct page_table *pt, int page, int frame, int bits );
+void page_table_set_entry( struct page_table *pt, int page, int frame, int bits, int ref_bits );
 
 /*
 Get the frame number and access bits associated with a page.
@@ -34,7 +34,7 @@ Get the frame number and access bits associated with a page.
 The bits may be any of PROT_READ, PROT_WRITE, or PROT_EXEC logical-ored together.
 */
 
-void page_table_get_entry( struct page_table *pt, int page, int *frame, int *bits );
+void page_table_get_entry( struct page_table *pt, int page, int *frame, int *bits, int *ref_bits );
 
 /* Return a pointer to the start of the virtual memory associated with a page table. */
 
