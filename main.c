@@ -79,7 +79,7 @@ void page_fault_handler_random(struct page_table *pt, int page){
 		// Find if there is an empty frame
 		int i;
 		for (i = 0; i < nframes; i++) {
-			if(ft->frames[i]==0){			
+			if(ft->frames[i]==0){
 				page_table_set_entry(pt,page,i,PROT_READ, 0);
 				ft->frames[i] = PROT_READ;
 				disk_read(disk, page, &physmem[i * PAGE_SIZE]);
@@ -91,7 +91,8 @@ void page_fault_handler_random(struct page_table *pt, int page){
 		}
 		// TODO: create a struct of input arguments to pass around including which fault handler to run
 		if(!empty_frame){
-			srand(time(NULL));
+			unsigned short seed = clock();
+			seed48(&seed);
 			int to_replace = lrand48()%nPages;
 			page_table_get_entry(pt, to_replace,&frame,&bits,&ref_bits);
 			if (ref_bits == PROT_READ|PROT_WRITE) {
@@ -168,10 +169,10 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 				cb_push(cb, page);
 				break;
 			}
-			
+
 		}
 		// TODO: create a struct of input arguments to pass around including which fault handler to run
-		
+
 		if(!empty_frame){
 			int *to_replace = malloc(sizeof(*to_replace));
 			cb_pop(cb, to_replace);
@@ -183,15 +184,15 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 			}
 			disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
 			diskReadCounter++;
-			page_table_set_entry(pt, page, frame, PROT_READ, 0);		
-			cb_push(cb, page);		
+			page_table_set_entry(pt, page, frame, PROT_READ, 0);
+			cb_push(cb, page);
 			page_table_set_entry(pt, *to_replace, new_frame, 0, 0);
 
 			ft->frames[frame] = PROT_READ;
 			ft->frames[new_frame] = 0;
 		}
 	}
-	
+
 	// page_table_print(pt);
 }
 
@@ -246,7 +247,7 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 				cb_push(cb, page);
 				break;
 			}
-			
+
 		}
 
 		if(!empty_frame){
