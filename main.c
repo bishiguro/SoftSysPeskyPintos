@@ -239,22 +239,15 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 			int j;
 			for (j = 0; j < nPages; j++) {
 				int *sc_page = malloc(sizeof(*sc_page));
-
 				cb_pop(cb, sc_page);
-
-				printf("before get_entry: %i\n", *sc_page);
-
 				page_table_get_entry(pt, *sc_page, &frame, &bits, &ref_bits);
-				printf("after get_entry: %i\n", *sc_page);
 
 				if (ref_bits == 1) {
-					printf("setting ref bit\n");
 					// set reference bit to 0
 					page_table_set_entry(pt, *sc_page, frame, bits, 0);
-					cb_push(cb, sc_page);
+					cb_push(cb, *sc_page);
 				}
 				else {
-					printf("replacing\n");
 					disk_write(disk, *sc_page, &physmem[frame * PAGE_SIZE]);
 					disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
 					page_table_set_entry(pt, page, frame, PROT_READ, 0);
@@ -267,8 +260,6 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 				}
 			}
 		}
-
-
 	}
 	page_table_print(pt);
 }
