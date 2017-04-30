@@ -90,7 +90,9 @@ void page_fault_handler_random(struct page_table *pt, int page){
 			srand(time(NULL));
 			int to_replace = lrand48()%nPages;
 			page_table_get_entry(pt, to_replace,&frame,&bits,&ref_bits);
-			disk_write(disk, to_replace, &physmem[frame * PAGE_SIZE]);
+			if (ref_bits == PROT_READ|PROT_WRITE) {
+				disk_write(disk, to_replace, &physmem[frame * PAGE_SIZE]);
+			}
 			disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
 			page_table_set_entry(pt, page, frame, PROT_READ, 0);
 			page_table_set_entry(pt, to_replace, new_frame, 0, 0);
@@ -168,7 +170,9 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 			cb_pop(cb, to_replace);
 
 			page_table_get_entry(pt, *to_replace,&frame,&bits, &ref_bits);
-			disk_write(disk, *to_replace, &physmem[frame * PAGE_SIZE]);
+			if (ref_bits == PROT_READ|PROT_WRITE) {
+				disk_write(disk, *to_replace, &physmem[frame * PAGE_SIZE]);
+			}
 			disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
 			printf("new frame: %i, old frame: %i\n", frame, new_frame);
 			page_table_set_entry(pt, page, frame, PROT_READ, 0);		
@@ -248,6 +252,9 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 					cb_push(cb, *sc_page);
 				}
 				else {
+					if (ref_bits == PROT_READ|PROT_WRITE) {
+						disk_write(disk, *sc_page, &physmem[frame * PAGE_SIZE]);
+					}
 					disk_write(disk, *sc_page, &physmem[frame * PAGE_SIZE]);
 					disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
 					page_table_set_entry(pt, page, frame, PROT_READ, 0);
