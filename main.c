@@ -103,6 +103,8 @@ void page_fault_handler_random(struct page_table *pt, int page){
 	// exit(1);
 }
 
+
+
 void page_fault_handler_fifo(struct page_table *pt, int page){
 	printf("Faulted page: %i\n", page);
 
@@ -136,7 +138,6 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 	else if (new_bits == (PROT_READ | PROT_WRITE)) {
 		printf("Error. RW pages should not fault.\n");
 	}
-
 	else {
 		// Find if there is an empty frame
 		int i;
@@ -241,6 +242,7 @@ int main( int argc, char *argv[] )
 
 	int npages = atoi(argv[1]);
 	int nframes = atoi(argv[2]);
+	const char *policy = argv[3];
 	const char *program = argv[4];
 
 	disk = disk_open("myvirtualdisk",npages);
@@ -249,12 +251,33 @@ int main( int argc, char *argv[] )
 		return 1;
 	}
 
+	struct page_table *pt;
+	if (!strcmp(policy, "fifo")){
+		//printf("FIFO\n");
+		pt = page_table_create(npages, nframes, page_fault_handler_fifo);
+	}
 
-	struct page_table *pt = page_table_create( npages, nframes, page_fault_handler_fifo);
+	else if(!strcmp(policy, "rand")){
+		//printf("RAND\n");
+		pt = page_table_create(npages, nframes, page_fault_handler_random);
+	}
+
+	else {
+		printf("Invalid replacement policy. Using random replacement as default.\n");
+		pt = page_table_create(npages, nframes, page_fault_handler_random);
+	}
+
 	if(!pt) {
 		fprintf(stderr,"couldn't create page table: %s\n",strerror(errno));
 		return 1;
 	}
+
+
+	// struct page_table *pt = page_table_create( npages, nframes, page_fault_handler_fifo);
+	// if(!pt) {
+	// 	fprintf(stderr,"couldn't create page table: %s\n",strerror(errno));
+	// 	return 1;
+	// }
 
 	char *virtmem = page_table_get_virtmem(pt);
 
