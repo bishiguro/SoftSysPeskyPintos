@@ -27,7 +27,7 @@ Virtual memory refers to the memory addressing the OS uses for its processes, wh
 
 
 We focused our project on the implementation of a specific part of virtual memory, page replacement algorithms. This includes understanding how page faults occur and how to handle page faults by creating page replacement algorithms. A page fault occurs when the a process accesses an address in the page table that there isn’t a mapping from virtual to physical memory for, resulting in the page replace algorithm being called. There are many page replacement policies, such as random, first-in first-out (FIFO), least recently used (LRU), and second-chance.
-The purpose of our project is to gain a general overview of Virtual Memory. We read ThinkOS Chapter 3: Virtual Memory to understand the different components that make up Virtual Memory (Refer to Figure 1). We read a previous project’s documentation on Virtual Memory in regard to Computer Architecture in order to understand that in the broader context, the concept of Virtual Memory is similar to caching. Understanding virtual memory is an important part of an Operating System and an implementation allows us to demonstrate mastery of the virtual memory concept. Specifically, our team was able to gain a comprehensive understanding of page faults, page table, frame table, disk, and page replacement algorithms random, fifo, and second-chance.  For further information from sources we used for information, we created an annotated bibliography with a summary of each source.
+The purpose of our project is to gain a general overview of Virtual Memory. We read ThinkOS Chapter 3: Virtual Memory to understand the different components that make up Virtual Memory (Refer to Figure 1). We read a previous project’s documentation on Virtual Memory in regard to Computer Architecture in order to understand that in the broader context, the concept of Virtual Memory is similar to caching. Understanding virtual memory is an important part of an Operating System and an implementation allows us to demonstrate mastery of the virtual memory concept. Specifically, our team was able to gain a comprehensive understanding of page faults, page table, frame table, disk, and the random, FIFO, and second-chance page replacement algorithms.  For further information from sources we used for information, we created an annotated bibliography with a summary of each source.
 
 ## Implementation
 
@@ -45,7 +45,7 @@ On a page fault, before attempting replacement, we check for empty frames; if th
 ![Figure 2](images/empty_frame.jpg)
 ###### Figure 2: Our implementation of virtual memory showing how empty frames are filled.
 
-Once the frame table is full, we need to replace one of the frames with data from the new page upon a page fault, as shown in Figure 3. The page we choose to replace is dependent on the replacement policy. For random replacement, we pick a random page to replace using `lrand48()`. For FIFO, we pop the oldest page in our circular buffer. For second chance FIFO, we inspect the reference bit for the oldest page in our circular buffer and pop the page if the reference bit is 0. Otherwise, we set the reference bit to 0 for that page and increment the pointer in the buffer until we get to a page where the reference bit is 0.
+Once the frame table is full, we need to replace one of the frames with data from the new page upon a page fault, as shown in Figure 3. The page we choose to replace is dependent on the replacement policy. For random replacement, we pick a random page to replace using `lrand48()`. For FIFO, we pop the oldest page in our circular buffer. For second chance FIFO, we inspect the reference bit for the oldest page in our circular buffer and pop the page if the reference bit is 0. Otherwise, we set the reference bit to 0 for that page and increment the pointer in the buffer until we get to a page where the reference bit is 0. We added the reference bit to the page table because it allows it to be easily indexed by the page, which keeps us from having to search through the pages.
 
 ![Figure 3](images/replacement.jpg)
 ###### Figure 3: Our implementation of virtual memory showing how pages are replaced.
@@ -62,11 +62,21 @@ After spending multiple weeks with trying to implement some of the features of P
 
 ## Annotated Bibliography
 
+
 ### ThinkOS Chapter 3: Virtual Memory
 
 [http://greenteapress.com/thinkos/html/thinkos004.html](http://greenteapress.com/thinkos/html/thinkos004.html)
 
 We each read this chapter before starting this project, and we will use it as a reference to the basics of virtual memory theory.
+
+### Notre Dame Virtual Memory project
+
+Poellabauer, Christian. "Project IV: Virtual Memory." Operating Systems Principles. N.p., 2016. Web. 30 Apr. 2017.
+
+[http://www3.nd.edu/~cpoellab/teaching/cse30341/project4.html](http://www3.nd.edu/~cpoellab/teaching/cse30341/project4.html)
+
+This was the starting point for our implementation of virtual memory. We used the starter code as well as the diagrams indicating what the desired process and behavior should be. 
+
 
 ### Virtual memory project for creating a system to manage memory on a USB
 
