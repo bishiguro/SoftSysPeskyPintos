@@ -31,10 +31,8 @@ struct frame_table *ft;
 circBuf_t *cb;
 
 int faultCounter = 0;
-
-int diskAccessCounter = 0;
-
-
+int diskReadCounter = 0;
+int diskWriteCounter = 0;
 
 /*random page fault handler
 * 1) chooses a free frame
@@ -81,12 +79,12 @@ void page_fault_handler_random(struct page_table *pt, int page){
 		// Find if there is an empty frame
 		int i;
 		for (i = 0; i < nframes; i++) {
-			if(ft->frames[i]==0){
-				printf("(page fault handler) frame: %i\n", i);
-				
+			if(ft->frames[i]==0){			
 				page_table_set_entry(pt,page,i,PROT_READ, 0);
 				ft->frames[i] = PROT_READ;
 				disk_read(disk, page, &physmem[i * PAGE_SIZE]);
+				diskReadCounter++;
+
 				empty_frame = 1;
 				break;
 			}
@@ -98,19 +96,19 @@ void page_fault_handler_random(struct page_table *pt, int page){
 			page_table_get_entry(pt, to_replace,&frame,&bits,&ref_bits);
 			if (ref_bits == PROT_READ|PROT_WRITE) {
 				disk_write(disk, to_replace, &physmem[frame * PAGE_SIZE]);
+				diskWriteCounter++;
 			}
 			disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
+			diskReadCounter++;
 			page_table_set_entry(pt, page, frame, PROT_READ, 0);
 			page_table_set_entry(pt, to_replace, new_frame, 0, 0);
 			printf("random #: %d\n",to_replace);
 
 			ft->frames[frame] = PROT_READ;
 			ft->frames[new_frame] = 0;
-
-			diskAccessCounter++;
 		}
 	}
-	page_table_print(pt);
+	// page_table_print(pt);
 
 	// TODO: why exit? when/do we use it?
 	// exit(1);
@@ -159,13 +157,13 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 		// Find if there is an empty frame
 		int i;
 		for (i = 0; i < nframes; i++) {
-
-			printf("(page fault handler) frame: %i, bits: %i\n", i, ft->frames[i]);
 			if(ft->frames[i]==0) {
 				page_table_set_entry(pt,page,i,PROT_READ, 0);
 				ft->frames[i] = PROT_READ; // what are we doing with this frame?
 
 				disk_read(disk, page, &physmem[i * PAGE_SIZE]);
+				diskReadCounter++;
+
 				empty_frame = 1;
 				cb_push(cb, page);
 				break;
@@ -181,22 +179,20 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 			page_table_get_entry(pt, *to_replace,&frame,&bits, &ref_bits);
 			if (ref_bits == PROT_READ|PROT_WRITE) {
 				disk_write(disk, *to_replace, &physmem[frame * PAGE_SIZE]);
+				diskWriteCounter++;
 			}
 			disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
-			printf("new frame: %i, old frame: %i\n", frame, new_frame);
+			diskReadCounter++;
 			page_table_set_entry(pt, page, frame, PROT_READ, 0);		
 			cb_push(cb, page);		
 			page_table_set_entry(pt, *to_replace, new_frame, 0, 0);
-			printf("page to replace: %d\n",*to_replace);
 
 			ft->frames[frame] = PROT_READ;
 			ft->frames[new_frame] = 0;
-
-			diskAccessCounter++;
 		}
 	}
 	
-	page_table_print(pt);
+	// page_table_print(pt);
 }
 
 void page_fault_handler_second_chance (struct page_table *pt, int page){
@@ -244,6 +240,8 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 				page_table_set_entry(pt,page,i,PROT_READ, new_ref_bits);
 				ft->frames[i] = PROT_READ;
 				disk_read(disk, page, &physmem[i * PAGE_SIZE]);
+				diskReadCounter++;
+
 				empty_frame = 1;
 				cb_push(cb, page);
 				break;
@@ -266,9 +264,12 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 				else {
 					if (ref_bits == PROT_READ|PROT_WRITE) {
 						disk_write(disk, *sc_page, &physmem[frame * PAGE_SIZE]);
+						diskWriteCounter++;
 					}
-					disk_write(disk, *sc_page, &physmem[frame * PAGE_SIZE]);
+
 					disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
+					diskReadCounter++;
+
 					page_table_set_entry(pt, page, frame, PROT_READ, 0);
 					cb_push(cb, page);
 					page_table_set_entry(pt, *sc_page, new_frame, 0, 0);
@@ -280,14 +281,14 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 			}
 		}
 	}
-	page_table_print(pt);
+	// page_table_print(pt);
 }
 
 // TODO: make this a handler that performs operations then passes off to whatever case we're running
 void page_fault_handler( struct page_table *pt, int page )
 {
 	printf("Faulted page: %i\n", page);
-	page_table_print(pt);
+	// page_table_print(pt);
 }
 
 /*
@@ -371,7 +372,8 @@ int main( int argc, char *argv[] )
 
 	//TODO: print total number of page faults, disk reads, disk writes
 	printf("Page faults: %i\n", faultCounter);
-	printf("Disk accesses: %i\n", diskAccessCounter);
+	printf("Disk reads: %i\n", diskReadCounter);
+	printf("Disk writes: %i\n", diskWriteCounter);
 
 	return 0;
 }
