@@ -45,7 +45,7 @@ On a page fault, before attempting replacement, we check for empty frames; if th
 ![Figure 2](images/empty_frame.jpg)
 ###### Figure 2: Our implementation of virtual memory showing how empty frames are filled.
 
-Once the frame table is full, we need to replace one of the frames with data from the new page upon a page fault, as shown in Figure 3. The page we choose to replace is dependent on the replacement policy. For random replacement, we pick a random page to replace using `lrand48()`. For FIFO, we pop the oldest page in our circular buffer. For second chance FIFO, we inspect the reference bit for the oldest page in our circular buffer and pop the page if the reference bit is 0. Otherwise, we set the reference bit to 0 for that page and increment the pointer in the buffer until we get to a page where the reference bit is 0. We added the reference bit to the page table because it allows it to be easily indexed by the page, which keeps us from having to search through the pages.
+Once the frame table is full, we need to replace one of the frames with data from the new page upon a page fault, as shown in Figure 3. The page we choose to replace is dependent on the replacement policy. For random replacement, we pick a random page to replace. For FIFO, we pop the oldest page in our circular buffer. For second chance FIFO, we inspect the reference bit for the oldest page in our circular buffer and pop the page if the reference bit is 0. Otherwise, we set the reference bit to 0 for that page and increment the pointer in the buffer until we get to a page where the reference bit is 0. We added the reference bit to the page table because it allows it to be easily indexed by the page, which keeps us from having to search through the pages.
 
 ![Figure 3](images/replacement.jpg)
 ###### Figure 3: Our implementation of virtual memory showing how pages are replaced.
@@ -63,22 +63,47 @@ After spending multiple weeks with trying to implement some of the features of P
 ## Annotated Bibliography
 
 
-### ThinkOS Chapter 3: Virtual Memory
+### ThinkOS Chapter 3: Virtual Memory:
 
 [http://greenteapress.com/thinkos/html/thinkos004.html](http://greenteapress.com/thinkos/html/thinkos004.html)
 
-We each read this chapter before starting this project, and we will use it as a reference to the basics of virtual memory theory.
+We each read TOS chapter 4 before starting this project, and we used it as a reference to the basics of virtual memory theory. It gave us a general overview of the topic, but we needed to consult other resources to learn about the specific parts of virtual memory we would need to implement (ex. TLB, replacement policies, page table). We also read TOS chapter 9 to understand basics of threading in order to build earlier projects in the Stanford Pintos project, which we later pivoted away from in favor of the Notre Dame project.
 
-### Notre Dame Virtual Memory project
+### Notre Dame Virtual Memory project:
 
 Poellabauer, Christian. "Project IV: Virtual Memory." Operating Systems Principles. N.p., 2016. Web. 30 Apr. 2017.
 
 [http://www3.nd.edu/~cpoellab/teaching/cse30341/project4.html](http://www3.nd.edu/~cpoellab/teaching/cse30341/project4.html)
 
-This was the starting point for our implementation of virtual memory. We used the starter code as well as the diagrams indicating what the desired process and behavior should be. 
+This was the starting point for our implementation of virtual memory. We used the starter code as well as the diagrams indicating what the desired process and behavior should be. The diagrams helped us understand when to call disk_read() and disk_write() as well as when and how to set permission bits.
+
+### Circular buffer overview:
+
+"Circular buffer." Wikipedia. Wikimedia Foundation, 26 Apr. 2017. Web. 30 Apr. 2017.
+
+[https://en.wikipedia.org/wiki/Circular_buffer](https://en.wikipedia.org/wiki/Circular_buffer)
+
+We used the Wikipedia article for the circular buffer to determine whether it was suitable to use for a FIFO queue for the pages. The article states that if you do not need to resize the buffer, it is more efficient than a linked list because of its fixed size. We realized that this would work for our FIFO queue because we knew the maximum size of the queue would be equal to the size of the page table.
+
+### Page replacement overview:
+
+"Page replacement algorithm." Wikipedia. Wikimedia Foundation, 25 Apr. 2017. Web. 30 Apr. 2017.
+
+[https://en.wikipedia.org/wiki/Page_replacement_algorithm](https://en.wikipedia.org/wiki/Page_replacement_algorithm)
+
+We used the page replacement algorithm when trying to figure out how to implement second-chance FIFO and found the Clock replacement policy, which was close to what we had with the circular buffer. We modified our first-chance FIFO implementation with the circular buffer using the description of how the reference bit should be set and reset.
 
 
-### Virtual memory project for creating a system to manage memory on a USB
+### Circular buffer tutorial:
+
+Chandrasekaran, Siddharth. "Implementing Circular/Ring Buffer in Embedded C." Embed Journal. EmbedJournal, 16 May 2014. Web. 30 Apr. 2017.
+
+[http://embedjournal.com/authors/siddharth-chandrasekaran](http://embedjournal.com/authors/siddharth-chandrasekaran)
+
+This tutorial helped us write the circular buffer that we used for FIFO and second-chance FIFO. We added additional methods to the buffer and modified it to be less conservative with space and more flexible. 
+
+
+### Virtual memory project for creating a system to manage memory on a USB:
 
 "Project 5: Virtual Memory." COS 318 : Operating System. Princeton University, 2004. Web. 26 Mar. 2017.
 
@@ -92,7 +117,7 @@ This is a virtual memory project description in Princeton’s Operating Systems 
 
 [https://web.stanford.edu/class/cs140/projects/pintos/pintos_4.html#SEC53](https://web.stanford.edu/class/cs140/projects/pintos/pintos_4.html#SEC53)
 
-This is a virtual memory project description in Stanford’s Operating Systems class that we might use as a starting point for our implementation.
+This is a virtual memory project description in Stanford’s Operating Systems class that we started off using for our PintOS implementation, but found that, although quite extensively documented, there were some issues we ran into that we couldn't find documentation for.
 
 ### Pintos Reference Guide:
 
@@ -100,7 +125,13 @@ Pfaff, Ben.  “Pintos.”  Stanford University, n.d.  Web.  26. Mar. 2017.
 
 [https://web.stanford.edu/class/cs140/projects/pintos/pintos.pdf](https://web.stanford.edu/class/cs140/projects/pintos/pintos.pdf)
 
-This includes Pintos documentation, the four projects in Stanford’s Operating Systems class, and a guide to setting up Pintos on our machines.
+This includes Pintos documentation, the four projects in Stanford’s Operating Systems class, and a guide to setting up Pintos on our machines. In addition to the virtual memory project description referenced above, this includes the first two course projects on threading and user programs, which we will need to either implement or understand solution implementations in order to build a base for our VM. We used this guide to verify that our Pintos installations were successful by running the alarm-multiple program.
+
+### Installing PintOS with QEMU:
+
+[https://pintosiiith.wordpress.com/2012/09/13/install-pintos-with-qemu/](https://pintosiiith.wordpress.com/2012/09/13/install-pintos-with-qemu/)
+
+This is a guide to how to install Pintos using QEMU as the hypervisor rather than Bochs, which speeds up the emulation substantially. We used it to fix some issues we had with paths to Pintos source files being incorrect. It did not explain how or why to use QEMU, but we used the other documentation to determine which hypervisor to use.
 
 ### Arduino virtual memory library:
 
