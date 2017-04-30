@@ -30,6 +30,11 @@ struct frame_table *ft;
 
 circBuf_t *cb;
 
+int faultCounter = 0;
+
+int diskAccessCounter = 0;
+
+
 
 /*random page fault handler
 * 1) chooses a free frame
@@ -39,6 +44,7 @@ circBuf_t *cb;
 */
 void page_fault_handler_random(struct page_table *pt, int page){
 	printf("Faulted page: %i\n", page);
+	faultCounter++;
 
 	// Make default values for frame and bits to fill in from the page table.
 	int frame;
@@ -95,6 +101,8 @@ void page_fault_handler_random(struct page_table *pt, int page){
 
 			ft->frames[frame] = PROT_READ;
 			ft->frames[new_frame] = 0;
+
+			diskAccessCounter++;
 		}
 	}
 	page_table_print(pt);
@@ -107,6 +115,7 @@ void page_fault_handler_random(struct page_table *pt, int page){
 
 void page_fault_handler_fifo(struct page_table *pt, int page){
 	printf("Faulted page: %i\n", page);
+	faultCounter++;
 
 	// Make default values for frame and bits to fill in from the page table.
 	int frame;
@@ -172,6 +181,8 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 
 			ft->frames[frame] = PROT_READ;
 			ft->frames[new_frame] = 0;
+
+			diskAccessCounter++;
 		}
 	}
 	
@@ -182,6 +193,7 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 void page_fault_handler( struct page_table *pt, int page )
 {
 	printf("Faulted page: %i\n", page);
+	faultCounter++;
 
 	if(!ft){
 		ft = malloc(sizeof(struct frame_table));
@@ -300,5 +312,8 @@ int main( int argc, char *argv[] )
 	disk_close(disk);
 
 	//TODO: print total number of page faults, disk reads, disk writes
+	printf("Page faults: %i\n", faultCounter);
+	printf("Disk accesses: %i\n", diskAccessCounter);
+
 	return 0;
 }
