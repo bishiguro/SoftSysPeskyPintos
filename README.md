@@ -6,7 +6,7 @@
 
 ## About `virtmem`
 
-This student project was created as part of Olin College of Engineering’s Software Systems course. For more details on this project, check out our [project website](https://bishiguro.github.io/SoftSysPeskyPintos/) and [final report]().
+This student project was created as part of Olin College of Engineering’s Software Systems course. For more details on this project, check out our [final report on our project website](https://bishiguro.github.io/SoftSysPeskyPintos/).
 
 For this project, we implemented several page fault handlers and analyzed their performance. We used the structure provided in the [Operating Systems Principles course](http://www3.nd.edu/~cpoellab/teaching/cse30341/project4.html) at Notre Dame.
 
@@ -15,6 +15,7 @@ Our goal in doing this project was to understand virtual memory (VM), an importa
 ## Setup and Usage
 
 Clone this repository and change into its directory: `cd SoftSysPeskyPintos`
+
 To compile the project from source using the makefile:
 
 ```
