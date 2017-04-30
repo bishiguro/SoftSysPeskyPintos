@@ -221,8 +221,56 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 		printf("Error. RW pages should not fault.\n");
 	}
 	else {
+		// Find if there is an empty frame
+		int i;
+		for (i = 0; i < nframes; i++) {
+			if(ft->frames[i]==0) {
+				page_table_set_entry(pt,page,i,PROT_READ, new_ref_bits);
+				ft->frames[i] = PROT_READ;
+				disk_read(disk, page, &physmem[i * PAGE_SIZE]);
+				empty_frame = 1;
+				cb_push(cb, page);
+				break;
+			}
+			
+		}
+
+		if(!empty_frame){
+			int j;
+			for (j = 0; j < nPages; j++) {
+				int *sc_page = malloc(sizeof(*sc_page));
+
+				cb_pop(cb, sc_page);
+
+				printf("before get_entry: %i\n", *sc_page);
+
+				page_table_get_entry(pt, *sc_page, &frame, &bits, &ref_bits);
+				printf("after get_entry: %i\n", *sc_page);
+
+				if (ref_bits == 1) {
+					printf("setting ref bit\n");
+					// set reference bit to 0
+					page_table_set_entry(pt, *sc_page, frame, bits, 0);
+					cb_push(cb, sc_page);
+				}
+				else {
+					printf("replacing\n");
+					disk_write(disk, *sc_page, &physmem[frame * PAGE_SIZE]);
+					disk_read(disk, page, &physmem[new_frame * PAGE_SIZE]);
+					page_table_set_entry(pt, page, frame, PROT_READ, 0);
+					cb_push(cb, page);
+					page_table_set_entry(pt, *sc_page, new_frame, 0, 0);
+
+					ft->frames[frame] = PROT_READ;
+					ft->frames[new_frame] = 0;
+					break;
+				}
+			}
+		}
+
 
 	}
+	page_table_print(pt);
 }
 
 // TODO: make this a handler that performs operations then passes off to whatever case we're running
@@ -267,6 +315,10 @@ int main( int argc, char *argv[] )
 	else if(!strcmp(policy, "rand")){
 		//printf("RAND\n");
 		pt = page_table_create(npages, nframes, page_fault_handler_random);
+	}
+
+	else if(!strcmp(policy, "second-chance")) {
+		pt = page_table_create(npages, nframes, page_fault_handler_second_chance);
 	}
 
 	else {
