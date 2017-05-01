@@ -59,6 +59,17 @@ After spending multiple weeks with trying to implement some of the features of P
 
 ## Results
 
+We completed our project by creating a working simulation of virtual memory.  In its final version, our virtual memory implementation includes a page table and frame table, and page fault handlers that utilize random, FIFO, and second chance page replacement algorithms.  Given parameters for the number of pages and frames, what replacement algorithm to use, and what test to run, our  virtual memory system outputs the mapping for each page in the page table and the state of the frame it maps to in terms of permission bits. 
+
+![Figure 4](images/fifo.png)
+
+We collected data on each of the page replacement algorithms we implemented on the number of page faults and disk reads for a given number of pages and frames, then plotted the data as shown below.
+
+![Figure 5](images/pagefaults.png)
+
+![Figure 6](images/diskreads.png)
+
+Based on the collected data, our FIFO and second chance page replacement algorithms were more effective than random for smaller numbers of pages and frames, but less effective for larger numbers.  FIFO and second chance also always performed the same due to their similar usage of the same data structure.  We did not have enough time to implement a custom page replacement algorithm, but looking forward we would likely attempt to create an LRU algorithm to be more efficient than random for higher values.
 
 ## Annotated Bibliography
 
