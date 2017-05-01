@@ -11,6 +11,7 @@ how to use the page table and disk interfaces.
 #include "disk.h"
 #include "program.h"
 #include "circ_buffer.c"
+#include "linked_list.c"
 
 #include <sys/mman.h>
 #include <errno.h>
@@ -33,6 +34,7 @@ circBuf_t *cb;
 int faultCounter = 0;
 int diskReadCounter = 0;
 int diskWriteCounter = 0;
+
 
 /*random page fault handler
 * 1) chooses a free frame
@@ -95,7 +97,7 @@ void page_fault_handler_random(struct page_table *pt, int page){
 			seed48(&seed);
 			int to_replace = lrand48()%nPages;
 			page_table_get_entry(pt, to_replace,&frame,&bits,&ref_bits);
-			if (ref_bits == PROT_READ|PROT_WRITE) {
+			if (ref_bits == (PROT_READ|PROT_WRITE)) {
 				disk_write(disk, to_replace, &physmem[frame * PAGE_SIZE]);
 				diskWriteCounter++;
 			}
@@ -114,7 +116,6 @@ void page_fault_handler_random(struct page_table *pt, int page){
 	// TODO: why exit? when/do we use it?
 	// exit(1);
 }
-
 
 
 void page_fault_handler_fifo(struct page_table *pt, int page){
@@ -175,10 +176,13 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 
 		if(!empty_frame){
 			int *to_replace = malloc(sizeof(*to_replace));
+			//printf("Before pop: %i\n", *to_replace);
 			cb_pop(cb, to_replace);
+			//printf("After pop: %i\n", *to_replace);
+
 
 			page_table_get_entry(pt, *to_replace,&frame,&bits, &ref_bits);
-			if (ref_bits == PROT_READ|PROT_WRITE) {
+			if (ref_bits == (PROT_READ|PROT_WRITE)) {
 				disk_write(disk, *to_replace, &physmem[frame * PAGE_SIZE]);
 				diskWriteCounter++;
 			}
@@ -193,7 +197,7 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 		}
 	}
 
-	// page_table_print(pt);
+	page_table_print(pt);
 }
 
 void page_fault_handler_second_chance (struct page_table *pt, int page){
@@ -263,7 +267,7 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 					cb_push(cb, *sc_page);
 				}
 				else {
-					if (ref_bits == PROT_READ|PROT_WRITE) {
+					if (ref_bits == (PROT_READ|PROT_WRITE)) {
 						disk_write(disk, *sc_page, &physmem[frame * PAGE_SIZE]);
 						diskWriteCounter++;
 					}
@@ -303,7 +307,7 @@ TODO:
 int main( int argc, char *argv[] )
 {
 	if(argc!=5) {
-		printf("use: virtmem <npages> <nframes> <rand|fifo|custom> <sort|scan|focus>\n");
+		printf("use: virtmem <npages> <nframes> <rand|fifo|second-chance> <sort|scan|focus>\n");
 		return 1;
 	}
 
