@@ -23,13 +23,13 @@ make circ_buffer.o
 make virtmem
 ```
 
-To run the program: ```./virtmem npages nframes rand|fifo|custom scan|sort|focus```
+To run the program: ```./virtmem npages nframes rand|fifo|second-chance scan|sort|focus```
 
 Argument 1: `npages` is the number of pages in virtual memory.
 
 Argument 2: `nframes` is the number of frames in physical memory.
 
-Argument 3: The implemented replacement polices are `rand`([random replacement](https://en.wikipedia.org/wiki/Page_replacement_algorithm#Random)), `fifo`( [First-In-First-Out](https://en.wikipedia.org/wiki/Page_replacement_algorithm#First-in.2C_first-out) using a circular buffer), and `custom` ([Clock](https://en.wikipedia.org/wiki/Page_replacement_algorithm#Clock) which behaves like [second chance FIFO](https://en.wikipedia.org/wiki/Page_replacement_algorithm#Second-chance) using a circular buffer).
+Argument 3: The implemented replacement polices are `rand`([random replacement](https://en.wikipedia.org/wiki/Page_replacement_algorithm#Random)), `fifo`( [First-In-First-Out](https://en.wikipedia.org/wiki/Page_replacement_algorithm#First-in.2C_first-out) using a circular buffer), and `second-chance` ([Clock](https://en.wikipedia.org/wiki/Page_replacement_algorithm#Clock) which behaves like [second chance FIFO](https://en.wikipedia.org/wiki/Page_replacement_algorithm#Second-chance) using a circular buffer).
 
 Argument 4: Program to run (see [program.c](https://github.com/bishiguro/SoftSysPeskyPintos/blob/master/program.c) for more about each program).
 
