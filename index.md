@@ -82,23 +82,23 @@ We collected data on each of the page replacement algorithms we implemented on t
 Based on the collected data, our FIFO and second chance page replacement algorithms were more effective than random for smaller numbers of pages and frames, but less effective for larger numbers.  FIFO and second chance also always performed the same due to their similar usage of the same data structure.  We did not have enough time to implement a custom page replacement algorithm, but looking forward we would likely attempt to create an LRU algorithm to be more efficient than random for higher values.
 
 ## Learning Objectives
-This project was intended to be a learning exercise for the team to get hands on experience with implementing an important component of VM, the page fault handler. We accomplished our learning goals, which were:
+This project was intended to be a learning exercise for the team to get hands on experience with implementing an important component of virtual memory, the page fault handler. We accomplished our learning goals, which were:
 
-* Learn about all the components of VM
+* Learn about all the components of virtual memory
 
-* In depth understanding of TLB
+* In-depth understanding of a TLB
 
-* In depth understanding of Page Table
+* In-depth understanding of a page table
 
-* In depth understanding of different page replacement algorithms
+* In-depth understanding of different page replacement algorithms
 
-* Mapping of Virtual Address to Physical Address
+* Mapping of virtual address to physical address
 
-* Physical Memory versus Disk
+* Physical memory versus disk
 
 * Design decisions on how to implement a frame table
 
-* Data structure decisions on how to implement fifo.
+* Data structure decisions on how to implement fifo
 
 While there are various other page replacement algorithms to implement, this project still proves to be a valuable learning experience for the team to gain in-depth knowledge in VM and experience implementing some page replacement algorithms.
 
