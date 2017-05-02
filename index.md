@@ -63,13 +63,21 @@ We completed our project by creating a working simulation of virtual memory.  In
 
 ![Figure 4](images/fifo.png)
 
+###### Figure 4: Output from a run of `virtmem`
+
 We collected data on each of the page replacement algorithms we implemented on the number of page faults and disk reads for a given number of pages and frames, then plotted the data as shown below.
 
 ![Figure 5](images/pagefaults.png)
 
+###### Figure 5: Plot of page faults for page replacement algorithms
+
 ![Figure 6](images/diskreads.png)
 
+###### Figure 6: Plot of disk reads for page replacement algorithms
+
 ![Figure 7](images/diskwrites.png)
+
+###### Figure 7: Plot of disk writes for page replacement algorithms
 
 Based on the collected data, our FIFO and second chance page replacement algorithms were more effective than random for smaller numbers of pages and frames, but less effective for larger numbers.  FIFO and second chance also always performed the same due to their similar usage of the same data structure.  We did not have enough time to implement a custom page replacement algorithm, but looking forward we would likely attempt to create an LRU algorithm to be more efficient than random for higher values.
 
