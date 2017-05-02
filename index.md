@@ -69,9 +69,13 @@ Here is an example of the random replacement policy on a virtual memory system w
 
 ![Figure 5](images/rand_fill.png)
 
+###### Figure 5: Setting mapping to empty frames
+
 After there are no remaining empty frames, a random page of the 5 available pages is chosen to be replaced.  The data in the frame associated with the replaced page is written to disk, and a new page-frame mapping is set at the faulted page number.
 
 ![Figure 6](images/rand_repl.png)
+
+###### Figure 6: Random page replacement
 
 We collected data on each of the page replacement algorithms we implemented on the number of page faults and disk reads for a given number of pages and frames, then plotted the data as shown below.
 
