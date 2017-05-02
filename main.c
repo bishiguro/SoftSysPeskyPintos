@@ -102,6 +102,8 @@ void page_fault_handler_random(struct page_table *pt, int page){
 			ft->frames[new_frame] = 0;
 		}
 	}
+	// page_table_print(pt);
+
 }
 
 // Page fault handler that uses a circular buffer to keep track of pages, and replaces the oldest page when the page table is full
@@ -146,7 +148,7 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 		for (i = 0; i < nframes; i++) {
 			if(ft->frames[i]==0) {
 				page_table_set_entry(pt,page,i,PROT_READ, 0);
-				ft->frames[i] = PROT_READ;?
+				ft->frames[i] = PROT_READ;
 
 				disk_read(disk, page, &physmem[i * PAGE_SIZE]);
 				diskReadCounter++;
@@ -177,6 +179,8 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 			ft->frames[new_frame] = 0;
 		}
 	}
+	// page_table_print(pt);
+
 }
 
 // Page fault handler that uses a circular buffer to keep track of pages, and replaces the oldest page when the page table is full
@@ -262,6 +266,7 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 			}
 		}
 	}
+	// page_table_print(pt);
 }
 
 int main( int argc, char *argv[] )
