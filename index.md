@@ -69,6 +69,8 @@ We collected data on each of the page replacement algorithms we implemented on t
 
 ![Figure 6](images/diskreads.png)
 
+![Figure 7](images/diskwrites.png)
+
 Based on the collected data, our FIFO and second chance page replacement algorithms were more effective than random for smaller numbers of pages and frames, but less effective for larger numbers.  FIFO and second chance also always performed the same due to their similar usage of the same data structure.  We did not have enough time to implement a custom page replacement algorithm, but looking forward we would likely attempt to create an LRU algorithm to be more efficient than random for higher values.
 
 ## Annotated Bibliography
