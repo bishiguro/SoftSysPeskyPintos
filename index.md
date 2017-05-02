@@ -79,7 +79,11 @@ We collected data on each of the page replacement algorithms we implemented on t
 
 ###### Figure 7: Plot of disk writes for page replacement algorithms
 
-Based on the collected data, our FIFO and second chance page replacement algorithms were more effective than random for smaller numbers of pages and frames, but less effective for larger numbers.  FIFO and second chance also always performed the same due to their similar usage of the same data structure.  We did not have enough time to implement a custom page replacement algorithm, but looking forward we would likely attempt to create an LRU algorithm to be more efficient than random for higher values.
+Based on the collected data, our FIFO and second chance page replacement algorithms were more effective than random for smaller numbers of pages and frames, but less effective for larger numbers.  Random page replacement also always resulted in a larger number of disk writes, which does slow down the speed of the replacement method.  
+
+FIFO and second chance run with the same performance because of an issue with our write bits.  Our page fault handler implementation first checks whether the permission bits of the page are PROT_READ and if so updates it to PROT_READ | PROT_WRITE.  This is because we make the assumption that if the permissions are set to PROT_READ, the page should already be in the page table and therefore the fault occurred because the program is attempting to write to it.  Despite the fact that our test programs do not modify every variable, however, the behavior of our fault handler is such that all pages have their write bit set.  If there were pages that were only being read, which we had originally expected, a second chance page replacement policy would theoretically result in fewer page faults.
+
+If we were to expand upon this project, we would have liked to have built an LRU algorithm as well so that our virtual memory system could behave more efficiently than with random replacement for higher values.
 
 ## Learning Objectives
 This project was intended to be a learning exercise for the team to get hands on experience with implementing an important component of virtual memory, the page fault handler. We accomplished our learning goals, which were:
