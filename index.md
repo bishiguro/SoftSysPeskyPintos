@@ -75,14 +75,22 @@ Based on the collected data, our FIFO and second chance page replacement algorit
 
 ## Learning Objectives
 This project was intended to be a learning exercise for the team to get hands on experience with implementing an important component of VM, the page fault handler. We accomplished our learning goals, which were:
-Learn about all the components of VM
-In depth understanding of TLB
-In depth understanding of Page Table
-In depth understanding of different page replacement algorithms
-Mapping of Virtual Address to Physical Address
-Physical Memory versus Disk
-Design decisions on how to implement a frame table
-Data structure decisions on how to implement fifo.
+
+* Learn about all the components of VM
+
+* In depth understanding of TLB
+
+* In depth understanding of Page Table
+
+* In depth understanding of different page replacement algorithms
+
+* Mapping of Virtual Address to Physical Address
+
+* Physical Memory versus Disk
+
+* Design decisions on how to implement a frame table
+
+* Data structure decisions on how to implement fifo.
 
 While there are various other page replacement algorithms to implement, this project still proves to be a valuable learning experience for the team to gain in-depth knowledge in VM and experience implementing some page replacement algorithms.
 
