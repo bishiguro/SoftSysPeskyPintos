@@ -65,19 +65,27 @@ We completed our project by creating a working simulation of virtual memory.  In
 
 ###### Figure 4: Output from a run of `virtmem`
 
+Here is an example of the random replacement policy on a virtual memory system with 5 pages and 3 frames, running a “sort” function.  First, the 3 available empty frames are filled and mapped to pages in the page table.
+
+![Figure 5](images/rand_fill.png)
+
+After there are no remaining empty frames, a random page of the 5 available pages is chosen to be replaced.  The data in the frame associated with the replaced page is written to disk, and a new page-frame mapping is set at the faulted page number.
+
+![Figure 6](images/rand_repl.png)
+
 We collected data on each of the page replacement algorithms we implemented on the number of page faults and disk reads for a given number of pages and frames, then plotted the data as shown below.
 
-![Figure 5](images/pagefaults.png)
+![Figure 7](images/pagefaults.png)
 
-###### Figure 5: Plot of page faults for page replacement algorithms
+###### Figure 7: Plot of page faults for page replacement algorithms
 
-![Figure 6](images/diskreads.png)
+![Figure 8](images/diskreads.png)
 
-###### Figure 6: Plot of disk reads for page replacement algorithms
+###### Figure 8: Plot of disk reads for page replacement algorithms
 
-![Figure 7](images/diskwrites.png)
+![Figure 9](images/diskwrites.png)
 
-###### Figure 7: Plot of disk writes for page replacement algorithms
+###### Figure 9: Plot of disk writes for page replacement algorithms
 
 Based on the collected data, our FIFO and second chance page replacement algorithms were more effective than random for smaller numbers of pages and frames, but less effective for larger numbers.  Random page replacement also always resulted in a larger number of disk writes, which does slow down the speed of the replacement method.  
 
