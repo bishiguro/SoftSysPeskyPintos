@@ -35,17 +35,11 @@ int diskReadCounter = 0;
 int diskWriteCounter = 0;
 
 
-/*random page fault handler
-* 1) chooses a free frame
-* 2) adjusts page table to map page to free frame, with read permissions
-* 3) loads page from disk into free frame
-* Downside: Prone to throwing out a page that's being used
-*/
+// Page fault handler that selects a random page when the page table is full to write to disk and replace
 void page_fault_handler_random(struct page_table *pt, int page){
 	printf("Faulted page: %i\n", page);
 	faultCounter++;
 
-	// Make default values for frame and bits to fill in from the page table.
 	int frame;
 	int bits;
 	int ref_bits;
@@ -77,7 +71,6 @@ void page_fault_handler_random(struct page_table *pt, int page){
 		printf("Error. RW pages should not fault.\n");
 	}
 	else {
-		// Find if there is an empty frame
 		int i;
 		for (i = 0; i < nframes; i++) {
 			if(ft->frames[i]==0){
@@ -90,7 +83,6 @@ void page_fault_handler_random(struct page_table *pt, int page){
 				break;
 			}
 		}
-		// TODO: create a struct of input arguments to pass around including which fault handler to run
 		if(!empty_frame){
 			unsigned short seed = clock();
 			seed48(&seed);
@@ -110,18 +102,13 @@ void page_fault_handler_random(struct page_table *pt, int page){
 			ft->frames[new_frame] = 0;
 		}
 	}
-	// page_table_print(pt);
-
-	// TODO: why exit? when/do we use it?
-	// exit(1);
 }
 
-
+// Page fault handler that uses a circular buffer to keep track of pages, and replaces the oldest page when the page table is full
 void page_fault_handler_fifo(struct page_table *pt, int page){
 	printf("Faulted page: %i\n", page);
 	faultCounter++;
 
-	// Make default values for frame and bits to fill in from the page table.
 	int frame;
 	int bits;
 	int ref_bits;
@@ -155,12 +142,11 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 		printf("Error. RW pages should not fault.\n");
 	}
 	else {
-		// Find if there is an empty frame
 		int i;
 		for (i = 0; i < nframes; i++) {
 			if(ft->frames[i]==0) {
 				page_table_set_entry(pt,page,i,PROT_READ, 0);
-				ft->frames[i] = PROT_READ; // what are we doing with this frame?
+				ft->frames[i] = PROT_READ;?
 
 				disk_read(disk, page, &physmem[i * PAGE_SIZE]);
 				diskReadCounter++;
@@ -171,13 +157,10 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 			}
 
 		}
-		// TODO: create a struct of input arguments to pass around including which fault handler to run
 
 		if(!empty_frame){
 			int *to_replace = malloc(sizeof(*to_replace));
-			//printf("Before pop: %i\n", *to_replace);
 			cb_pop(cb, to_replace);
-			//printf("After pop: %i\n", *to_replace);
 
 			page_table_get_entry(pt, *to_replace,&frame,&bits, &ref_bits);
 			if (ref_bits == PROT_READ|PROT_WRITE) {
@@ -194,15 +177,13 @@ void page_fault_handler_fifo(struct page_table *pt, int page){
 			ft->frames[new_frame] = 0;
 		}
 	}
-
-	// page_table_print(pt);
 }
 
+// Page fault handler that uses a circular buffer to keep track of pages, and replaces the oldest page when the page table is full
 void page_fault_handler_second_chance (struct page_table *pt, int page){
 	printf("Faulted page: %i\n", page);
 	faultCounter++;
 
-	// Make default values for frame and bits to fill in from the page table.
 	int frame;
 	int bits;
 	int ref_bits;
@@ -236,7 +217,6 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 		printf("Error. RW pages should not fault.\n");
 	}
 	else {
-		// Find if there is an empty frame
 		int i;
 		for (i = 0; i < nframes; i++) {
 			if(ft->frames[i]==0) {
@@ -249,7 +229,6 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 				cb_push(cb, page);
 				break;
 			}
-
 		}
 
 		if(!empty_frame){
@@ -260,7 +239,6 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 				page_table_get_entry(pt, *sc_page, &frame, &bits, &ref_bits);
 
 				if (ref_bits == 1) {
-					// set reference bit to 0
 					page_table_set_entry(pt, *sc_page, frame, bits, 0);
 					cb_push(cb, *sc_page);
 				}
@@ -284,24 +262,8 @@ void page_fault_handler_second_chance (struct page_table *pt, int page){
 			}
 		}
 	}
-	// page_table_print(pt);
 }
 
-// TODO: make this a handler that performs operations then passes off to whatever case we're running
-void page_fault_handler( struct page_table *pt, int page )
-{
-	printf("Faulted page: %i\n", page);
-	// page_table_print(pt);
-}
-
-/*
-TODO:
-3) implement custom algorithm
-TODO:
-1) describe custom page replacement algorithm
-2) explain why one algorithm works better than another
-3) include which command line arguments we ran to reproduce work
-*/
 int main( int argc, char *argv[] )
 {
 	if(argc!=5) {
@@ -322,12 +284,10 @@ int main( int argc, char *argv[] )
 
 	struct page_table *pt;
 	if (!strcmp(policy, "fifo")){
-		//printf("FIFO\n");
 		pt = page_table_create(npages, nframes, page_fault_handler_fifo);
 	}
 
 	else if(!strcmp(policy, "rand")){
-		//printf("RAND\n");
 		pt = page_table_create(npages, nframes, page_fault_handler_random);
 	}
 
@@ -346,15 +306,7 @@ int main( int argc, char *argv[] )
 	}
 
 
-	// struct page_table *pt = page_table_create( npages, nframes, page_fault_handler_fifo);
-	// if(!pt) {
-	// 	fprintf(stderr,"couldn't create page table: %s\n",strerror(errno));
-	// 	return 1;
-	// }
-
 	char *virtmem = page_table_get_virtmem(pt);
-
-	char *physmem = page_table_get_physmem(pt);
 
 	if(!strcmp(program,"sort")) {
 		sort_program(virtmem,npages*PAGE_SIZE);
@@ -372,8 +324,6 @@ int main( int argc, char *argv[] )
 
 	page_table_delete(pt);
 	disk_close(disk);
-
-	//TODO: print total number of page faults, disk reads, disk writes
 	printf("Page faults: %i\n", faultCounter);
 	printf("Disk reads: %i\n", diskReadCounter);
 	printf("Disk writes: %i\n", diskWriteCounter);
