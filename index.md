@@ -1,5 +1,5 @@
 ## virtmem: Virtual Memory in C
-###### Implementation and analysis of page replacement policies
+###### Implementation of page replacement policies
 
 
 
